@@ -41,7 +41,9 @@ export async function getQuestsForDofus(
     sharedMap.set(c.quest_id, [...existing, c.dofus_id]);
   }
 
-  return chains.map((c) => ({
+  return chains
+    .filter((c) => c.quest != null)
+    .map((c) => ({
     ...c.quest,
     chain: {
       id: c.id,

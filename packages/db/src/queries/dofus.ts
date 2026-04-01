@@ -48,7 +48,8 @@ export async function getDofusProgressForCharacter(
   if (error) throw error;
   return (data ?? []).map((row) => ({
     ...row,
-    // Cast progress_pct: Supabase may return PostgreSQL NUMERIC as string
-    progress_pct: Number(row.progress_pct),
+    // Cast progress_pct: PostgreSQL NUMERIC comes back as string over REST wire.
+    // null happens when a Dofus has no quest chain rows (NULLIF guard in the view).
+    progress_pct: row.progress_pct != null ? Number(row.progress_pct) : 0,
   })) as DofusProgress[];
 }
