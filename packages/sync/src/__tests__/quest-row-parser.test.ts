@@ -71,4 +71,21 @@ describe("parseQuestRow", () => {
     expect(parseQuestRow(prereqRow, "Prérequis")?.section).toBe("prerequisite");
     expect(parseQuestRow(mainRow, "Chaîne principale")?.section).toBe("main");
   });
+
+  it("inherits section as 'prerequisite' when context is Prérequis", () => {
+    const row: RawSheetRow = ["", "Suite prérequis", "", "combat_solo", "", "", ""];
+    const result = parseQuestRow(row, "Prérequis");
+    expect(result?.section).toBe("prerequisite");
+  });
+
+  it("handles short rows (fewer than 7 columns) without throwing", () => {
+    const row: RawSheetRow = ["Chaîne principale", "Ma quête"];
+    const result = parseQuestRow(row, "Chaîne principale");
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe("Ma quête");
+    expect(result?.quest_types).toEqual([]);
+    expect(result?.group_marker).toBeNull();
+    expect(result?.combat_count).toBeNull();
+    expect(result?.is_avoidable).toBe(false);
+  });
 });

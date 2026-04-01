@@ -33,4 +33,20 @@ describe("parseResourceRows", () => {
     ];
     expect(parseResourceRows(rows)).toHaveLength(0);
   });
+
+  it("defaults quantity to 1 when quantity cell is missing", () => {
+    const rows: RawSheetRow[] = [
+      ["", "", "", "", "", "", "", "", "Ressource", "📦"],  // only 10 columns, no qty
+    ];
+    expect(parseResourceRows(rows)[0].quantity_per_character).toBe(1);
+  });
+
+  it("handles short rows without throwing", () => {
+    const rows: RawSheetRow[] = [
+      ["", "", "", "", "", "", "", "", "Ressource"],  // only 9 columns
+    ];
+    const result = parseResourceRows(rows);
+    expect(result).toHaveLength(1);
+    expect(result[0].is_kamas).toBe(false);
+  });
 });

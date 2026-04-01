@@ -29,14 +29,18 @@ const VALID_QUEST_TYPES = new Set<QuestType>([
 
 export function parseQuestRow(
   row: RawSheetRow,
-  previousSection: string
+  currentSectionContext: string
 ): ParsedQuestRow | null {
   const [sectionCell, name, url, typesCell, groupMarker, combatCountCell, avoidableCell] = row;
 
   if (!name?.trim()) return null;
 
-  const rawSection = sectionCell?.trim() || previousSection;
-  const section: QuestSection = SECTION_MAP[rawSection] ?? "main";
+  const rawSection = sectionCell?.trim() || currentSectionContext;
+  const mappedSection = SECTION_MAP[rawSection];
+  if (mappedSection === undefined) {
+    console.warn(`[quest-row-parser] Unknown section label: "${rawSection}", defaulting to "main"`);
+  }
+  const section: QuestSection = mappedSection ?? "main";
 
   const quest_types = (typesCell ?? "")
     .split(",")
