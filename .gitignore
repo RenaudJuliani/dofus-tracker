@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.local
+.turbo/
+.next/
+.expo/
+service-account.json
+supabase/.branches/
+supabase/.temp/
