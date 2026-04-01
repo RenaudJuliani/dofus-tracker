@@ -117,9 +117,11 @@ export async function syncTabToSupabase(
 
     // 4. Replace resources for this Dofus
     const parsedResources = parseResourceRows(dataRows);
-    if (parsedResources.length > 0) {
-      await client.from("resources").delete().eq("dofus_id", dofusId);
 
+    // Always delete existing resources (handles case where sheet now has none)
+    await client.from("resources").delete().eq("dofus_id", dofusId);
+
+    if (parsedResources.length > 0) {
       const { error: resError } = await client
         .from("resources")
         .insert(parsedResources.map((r) => ({ ...r, dofus_id: dofusId })));
