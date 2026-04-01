@@ -64,7 +64,7 @@ export interface Character {
   id: string;
   user_id: string;
   name: string;
-  class: string;
+  character_class: string;  // renamed from 'class' (reserved keyword)
   created_at: string;
 }
 
@@ -83,6 +83,10 @@ export interface DofusProgress {
   dofus_name: string;
   total_quests: number;
   completed_quests: number;
+  /**
+   * Percentage 0-100. Computed via SQL ROUND(numeric).
+   * Supabase may return this as a string — cast with Number() in packages/db.
+   */
   progress_pct: number;
 }
 
@@ -90,8 +94,17 @@ export interface DofusProgress {
 export interface QuestWithChain extends Quest {
   chain: DofusQuestChain;
   is_completed: boolean;
-  /** IDs of other Dofus that also require this quest */
+  /**
+   * IDs of other Dofus that also require this quest.
+   * Computed via a secondary query on dofus_quest_chains — not a DB column.
+   * Returns [] if this quest is unique to one Dofus.
+   */
   shared_dofus_ids: string[];
+}
+
+export interface QuestProgressCounts {
+  completed: number;
+  total: number;
 }
 
 /** Dofus enriched with quest lists + resources for the detail page */
@@ -99,5 +112,5 @@ export interface DofusDetail extends Dofus {
   prerequisites: QuestWithChain[];
   main_quests: QuestWithChain[];
   resources: Resource[];
-  progress: { completed: number; total: number };
+  progress: QuestProgressCounts;
 }
