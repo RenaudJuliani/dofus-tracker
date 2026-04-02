@@ -1,9 +1,6 @@
--- Enable UUID generation
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Dofus items (one row per Dofus in the game)
 CREATE TABLE dofus (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   slug text NOT NULL UNIQUE,
   type text NOT NULL CHECK (type IN ('primordial', 'secondaire')),
@@ -17,7 +14,7 @@ CREATE TABLE dofus (
 
 -- Quests — shared across Dofus (one row per unique quest)
 CREATE TABLE quests (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   slug text NOT NULL UNIQUE,
   dofuspourlesnoobs_url text,
@@ -26,7 +23,7 @@ CREATE TABLE quests (
 
 -- Dofus ↔ Quest relation with ordering and quest metadata
 CREATE TABLE dofus_quest_chains (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   dofus_id uuid NOT NULL REFERENCES dofus(id) ON DELETE CASCADE,
   quest_id uuid NOT NULL REFERENCES quests(id) ON DELETE CASCADE,
   section text NOT NULL CHECK (section IN ('prerequisite', 'main')),
@@ -40,7 +37,7 @@ CREATE TABLE dofus_quest_chains (
 
 -- Resources required to complete a Dofus
 CREATE TABLE resources (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   icon_emoji text NOT NULL DEFAULT '📦',
   dofus_id uuid NOT NULL REFERENCES dofus(id) ON DELETE CASCADE,
@@ -59,7 +56,7 @@ CREATE TABLE user_profiles (
 -- Characters — multiple per account, progression is per character
 -- Note: column is 'character_class' (not 'class') to match the TypeScript interface
 CREATE TABLE characters (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name text NOT NULL,
   character_class text NOT NULL,
@@ -69,7 +66,7 @@ CREATE TABLE characters (
 -- Quest completions — per character, per quest (NOT per dofus)
 -- Checking a quest here marks it complete for ALL dofus that require it
 CREATE TABLE user_quest_completions (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   character_id uuid NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
   quest_id uuid NOT NULL REFERENCES quests(id) ON DELETE CASCADE,
   completed_at timestamptz NOT NULL DEFAULT now(),
