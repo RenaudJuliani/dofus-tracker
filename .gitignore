@@ -9,3 +9,4 @@ packages/*/dist/
 service-account.json
 supabase/.branches/
 supabase/.temp/
+.worktrees/
