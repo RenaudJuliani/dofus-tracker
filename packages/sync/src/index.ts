@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { fetchAllSheetTabs } from "./sheets-client.js";
 import { syncTabToSupabase } from "./upsert.js";
 
@@ -14,6 +15,8 @@ async function main() {
     process.exit(1);
   }
 
+  const client = createClient(supabaseUrl, serviceRoleKey);
+
   console.log("📋 Fetching Google Sheet tabs...");
   const tabs = await fetchAllSheetTabs(sheetId, keyPath);
   console.log(
@@ -26,7 +29,7 @@ async function main() {
 
   for (const tab of tabs) {
     process.stdout.write(`⚙️  Syncing "${tab.dofusName}"... `);
-    const report = await syncTabToSupabase(tab, supabaseUrl, serviceRoleKey);
+    const report = await syncTabToSupabase(tab, client);
     console.log(`✅ ${report.questsUpserted} quests, ${report.resourcesUpserted} resources`);
 
     if (report.errors.length > 0) {

@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { readFile } from "fs/promises";
+import { nameToSlug } from "./utils.js";
 
 export interface SheetTab {
   dofusName: string; // e.g. "Dofus Émeraude"
@@ -8,8 +9,14 @@ export interface SheetTab {
 }
 
 async function loadServiceAccount(keyPath: string): Promise<object> {
-  const raw = await readFile(keyPath, "utf-8");
-  return JSON.parse(raw);
+  try {
+    const raw = await readFile(keyPath, "utf-8");
+    return JSON.parse(raw);
+  } catch (err) {
+    throw new Error(
+      `Cannot load service account from "${keyPath}": ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
 }
 
 /**
@@ -48,15 +55,7 @@ export async function fetchAllSheetTabs(
 
     const rows = (valuesRes.data.values ?? []) as string[][];
 
-    // Derive slug: normalize accents, lowercase, replace non-alphanumeric with hyphen
-    const slug = tabName
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-
-    results.push({ dofusName: tabName, dofusSlug: slug, rows });
+    results.push({ dofusName: tabName, dofusSlug: nameToSlug(tabName), rows });
   }
 
   return results;

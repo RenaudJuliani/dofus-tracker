@@ -1,8 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseQuestRow } from "./parsers/quest-row-parser.js";
 import { parseResourceRows } from "./parsers/resource-parser.js";
 import { assignGroupIds } from "./parsers/group-detector.js";
 import type { SheetTab } from "./sheets-client.js";
+import { nameToSlug } from "./utils.js";
 
 export interface SyncReport {
   dofusName: string;
@@ -11,21 +12,10 @@ export interface SyncReport {
   errors: string[];
 }
 
-function nameToSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 export async function syncTabToSupabase(
   tab: SheetTab,
-  supabaseUrl: string,
-  serviceRoleKey: string
+  client: SupabaseClient
 ): Promise<SyncReport> {
-  const client = createClient(supabaseUrl, serviceRoleKey);
   const report: SyncReport = {
     dofusName: tab.dofusName,
     questsUpserted: 0,
@@ -73,6 +63,7 @@ export async function syncTabToSupabase(
     const rowsWithGroups = assignGroupIds(parsedRows);
 
     // 3. Upsert quests + chain entries in order
+    // order_index is global across sections — db queries order by section first, then order_index
     let orderIndex = 0;
     for (const row of rowsWithGroups) {
       const slug = nameToSlug(row.name);
@@ -119,9 +110,10 @@ export async function syncTabToSupabase(
     const parsedResources = parseResourceRows(dataRows);
 
     // Always delete existing resources (handles case where sheet now has none)
-    await client.from("resources").delete().eq("dofus_id", dofusId);
-
-    if (parsedResources.length > 0) {
+    const { error: deleteError } = await client.from("resources").delete().eq("dofus_id", dofusId);
+    if (deleteError) {
+      report.errors.push(`Resources delete failed: ${deleteError.message}`);
+    } else if (parsedResources.length > 0) {
       const { error: resError } = await client
         .from("resources")
         .insert(parsedResources.map((r) => ({ ...r, dofus_id: dofusId })));
