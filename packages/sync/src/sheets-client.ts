@@ -54,7 +54,10 @@ export async function fetchAllSheetTabs(
       valueRenderOption: 'FORMULA',
     });
 
-    const rows = (valuesRes.data.values ?? []) as string[][];
+    // Coerce all cells to strings — FORMULA mode returns booleans/numbers for non-formula cells
+    const rows = ((valuesRes.data.values ?? []) as unknown[][]).map((row) =>
+      row.map((cell) => (cell == null ? "" : String(cell)))
+    );
 
     results.push({ dofusName: tabName, dofusSlug: nameToSlug(tabName), rows });
   }
