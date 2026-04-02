@@ -1,0 +1,92 @@
+"use client";
+
+import { useState } from "react";
+import type { Resource } from "@dofus-tracker/types";
+
+const PRESETS = [1, 2, 3, 4, 5];
+
+interface Props {
+  resources: Resource[];
+  dofusColor: string;
+}
+
+export function ResourcePanel({ resources, dofusColor }: Props) {
+  const [multiplier, setMultiplier] = useState(1);
+
+  const formatNumber = (n: number) =>
+    n.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
+
+  const kamas = resources.filter((r) => r.is_kamas);
+  const items = resources.filter((r) => !r.is_kamas);
+
+  return (
+    <div className="glass rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div
+        className="px-5 py-3.5 border-b border-white/5"
+        style={{ borderTop: `2px solid ${dofusColor}44` }}
+      >
+        <h2 className="font-bold text-white">Ressources nécessaires</h2>
+      </div>
+
+      {/* Multiplier selector */}
+      <div className="px-5 py-3 border-b border-white/5">
+        <p className="text-xs text-gray-400 mb-2">Personnages</p>
+        <div className="flex gap-2">
+          {PRESETS.map((p) => (
+            <button
+              key={p}
+              onClick={() => setMultiplier(p)}
+              className={`flex-1 py-1 text-sm font-semibold rounded-lg transition-all ${
+                multiplier === p ? "text-black" : "btn-secondary"
+              }`}
+              style={
+                multiplier === p
+                  ? { background: `linear-gradient(135deg, ${dofusColor}, ${dofusColor}cc)` }
+                  : {}
+              }
+            >
+              ×{p}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Resources list */}
+      <div className="divide-y divide-white/[0.04] max-h-[60vh] overflow-y-auto">
+        {items.map((resource) => (
+          <div key={resource.id} className="flex items-center gap-3 px-5 py-2.5">
+            <span className="text-xl w-7 text-center shrink-0">{resource.icon_emoji}</span>
+            <span className="text-sm text-white flex-1 min-w-0 truncate">{resource.name}</span>
+            <span className="text-sm font-bold shrink-0" style={{ color: dofusColor }}>
+              {formatNumber(resource.quantity_per_character * multiplier)}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Kamas total */}
+      {kamas.length > 0 && (
+        <div className="border-t border-white/5 px-5 py-3 bg-yellow-500/5">
+          {kamas.map((k) => (
+            <div key={k.id} className="flex items-center gap-3">
+              <span className="text-xl w-7 text-center shrink-0">{k.icon_emoji}</span>
+              <span className="text-sm text-white flex-1">{k.name}</span>
+              <span className="text-sm font-bold text-yellow-400">
+                {formatNumber(k.quantity_per_character * multiplier)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Summary */}
+      <div className="px-5 py-3 border-t border-white/5">
+        <p className="text-xs text-gray-500 text-center">
+          {items.length} type{items.length > 1 ? "s" : ""} de ressources
+          {multiplier > 1 ? ` · ×${multiplier} personnages` : ""}
+        </p>
+      </div>
+    </div>
+  );
+}
