@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=@dofus-tracker/web",
+  "installCommand": "cd ../.. && pnpm install",
+  "outputDirectory": "apps/web/.next"
+}
