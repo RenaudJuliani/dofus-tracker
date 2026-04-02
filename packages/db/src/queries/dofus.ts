@@ -37,6 +37,11 @@ export async function getDofusBySlug(
   return data ?? null;
 }
 
+/**
+ * Returns progress rows for a specific character across all Dofus.
+ * Always provide characterId — the underlying v_dofus_progress view uses a
+ * CROSS JOIN (characters × dofus) and is expensive without this filter.
+ */
 export async function getDofusProgressForCharacter(
   client: SupabaseClient,
   characterId: string

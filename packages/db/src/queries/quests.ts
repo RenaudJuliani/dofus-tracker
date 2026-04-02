@@ -18,22 +18,24 @@ export async function getQuestsForDofus(
 
   const questIds = chains.map((c) => c.quest_id);
 
-  // Fetch which quests this character has completed
-  const { data: completions, error: completionsError } = await client
-    .from("user_quest_completions")
-    .select("quest_id")
-    .eq("character_id", characterId)
-    .in("quest_id", questIds);
+  // Fetch completions and shared chains in parallel (both are independent of each other)
+  const [{ data: completions, error: completionsError }, { data: allChains, error: allChainsError }] = await Promise.all([
+    // Fetch which quests this character has completed
+    client
+      .from("user_quest_completions")
+      .select("quest_id")
+      .eq("character_id", characterId)
+      .in("quest_id", questIds),
+    // Fetch other Dofus that share these quests (for the cross-dofus badge)
+    client
+      .from("dofus_quest_chains")
+      .select("quest_id, dofus_id")
+      .in("quest_id", questIds)
+      .neq("dofus_id", dofusId),
+  ]);
   if (completionsError) throw completionsError;
-  const completedSet = new Set((completions ?? []).map((c) => c.quest_id));
-
-  // Fetch other Dofus that share these quests (for the cross-dofus badge)
-  const { data: allChains, error: allChainsError } = await client
-    .from("dofus_quest_chains")
-    .select("quest_id, dofus_id")
-    .in("quest_id", questIds)
-    .neq("dofus_id", dofusId);
   if (allChainsError) throw allChainsError;
+  const completedSet = new Set((completions ?? []).map((c) => c.quest_id));
 
   const sharedMap = new Map<string, string[]>();
   for (const c of allChains ?? []) {

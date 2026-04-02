@@ -9,11 +9,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@dofus-tracker/types": "workspace:*",
     "@supabase/supabase-js": "^2.43.4",
     "googleapis": "^140.0.0"
   },
   "devDependencies": {
+    "@dofus-tracker/types": "workspace:*",
     "tsx": "^4.11.2",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
