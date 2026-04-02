@@ -2,6 +2,13 @@ import type { QuestSection, QuestType } from "@dofus-tracker/types";
 
 export type RawSheetRow = string[];
 
+/** Parse =HYPERLINK("url";"name") or =HYPERLINK("url","name") formulas */
+export function parseHyperlink(cell: string): { name: string; url: string } | null {
+  const match = cell.match(/^=HYPERLINK\("([^"]+)"[;,]\s*"([^"]+)"\)$/i);
+  if (!match) return null;
+  return { url: match[1], name: match[2] };
+}
+
 export interface ParsedQuestRow {
   name: string;
   dofuspourlesnoobs_url: string | null;
@@ -31,7 +38,13 @@ export function parseQuestRow(
   row: RawSheetRow,
   currentSectionContext: string
 ): ParsedQuestRow | null {
-  const [sectionCell, name, url, typesCell, groupMarker, combatCountCell, avoidableCell] = row;
+  const [sectionCell, , typesCell, groupMarker, combatCountCell, avoidableCell] = row;
+
+  // Find the HYPERLINK cell — quest name and URL are embedded in one formula
+  const hyperlinkCell = row.find((cell) => cell?.startsWith("=HYPERLINK("));
+  const hyperlink = hyperlinkCell ? parseHyperlink(hyperlinkCell) : null;
+  const name = hyperlink?.name ?? row[1]?.trim(); // fallback to row[1] for plain text
+  const url = hyperlink?.url ?? null;
 
   if (!name?.trim()) return null;
 

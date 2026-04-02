@@ -51,6 +51,7 @@ export async function fetchAllSheetTabs(
     const valuesRes = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
       range: `'${tabName}'`,
+      valueRenderOption: 'FORMULA',
     });
 
     const rows = (valuesRes.data.values ?? []) as string[][];

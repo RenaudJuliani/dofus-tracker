@@ -50,6 +50,15 @@ export async function syncTabToSupabase(
 
     // 2. Parse quest rows (skip row 0 = header)
     const dataRows = tab.rows.slice(1);
+
+    // DEBUG: print first 3 rows to understand column layout
+    if (tab.dofusName === "Dofus Emeraude") {
+      console.log(`\n[DEBUG] First 3 rows of "${tab.dofusName}":`);
+      dataRows.slice(0, 3).forEach((row, i) => {
+        console.log(`  Row ${i}:`, JSON.stringify(row));
+      });
+    }
+
     let currentSection = "Prérequis";
     const parsedRows = [];
 
