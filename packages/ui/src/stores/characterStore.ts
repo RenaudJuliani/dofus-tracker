@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, type PersistStorage } from "zustand/middleware";
 
-interface CharacterStore {
+export interface CharacterStore {
   activeCharacterId: string | null;
   setActiveCharacterId: (id: string | null) => void;
 }

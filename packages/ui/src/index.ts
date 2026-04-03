@@ -1,5 +1,6 @@
 // Stores
 export { createCharacterStore } from "./stores/characterStore.js";
+export type { CharacterStore } from "./stores/characterStore.js";
 
 // Hooks
 export { useQuestToggle } from "./hooks/useQuestToggle.js";
