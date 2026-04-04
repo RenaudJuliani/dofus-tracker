@@ -1,12 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { ScrollView, View, Text, ActivityIndicator } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
-import BottomSheet from "@gorhom/bottom-sheet";
+import type { BottomSheetHandle } from "@/components/shared/CustomBottomSheet";
 import {
   getDofusList,
   getDofusBySlug,
   getQuestsForDofus,
-  getResourcesForDofus,
 } from "@dofus-tracker/db";
 import { useQuestToggle } from "@dofus-tracker/ui";
 import { DofusHeader } from "@/components/dofus/DofusHeader";
@@ -15,17 +14,21 @@ import { ResourceSection } from "@/components/dofus/ResourceSection";
 import { ResourceBottomSheet } from "@/components/resources/ResourceBottomSheet";
 import { supabase } from "@/lib/supabase";
 import { useCharacterStore } from "@/lib/stores/characterStore";
-import type { Dofus, QuestWithChain, Resource, QuestSection as QuestSectionType } from "@dofus-tracker/types";
+import type {
+  Dofus,
+  QuestWithChain,
+  AggregatedResource,
+  QuestSection as QuestSectionType,
+} from "@dofus-tracker/types";
 
 export default function DofusDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const activeCharacterId = useCharacterStore((s) => s.activeCharacterId);
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetHandle>(null);
 
   const [dofus, setDofus] = useState<Dofus | null>(null);
   const [allDofus, setAllDofus] = useState<Dofus[]>([]);
   const [quests, setQuests] = useState<QuestWithChain[]>([]);
-  const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
 
   const { handleToggle, handleBulkComplete } = useQuestToggle({
@@ -46,12 +49,8 @@ export default function DofusDetailScreen() {
     setAllDofus(allD);
 
     if (foundDofus && activeCharacterId) {
-      const [q, r] = await Promise.all([
-        getQuestsForDofus(supabase, foundDofus.id, activeCharacterId),
-        getResourcesForDofus(supabase, foundDofus.id),
-      ]);
+      const q = await getQuestsForDofus(supabase, foundDofus.id, activeCharacterId);
       setQuests(q);
-      setResources(r);
     }
     setLoading(false);
   }, [slug, activeCharacterId]);
@@ -61,6 +60,33 @@ export default function DofusDetailScreen() {
   const prerequisites = quests.filter((q) => q.chain.section === "prerequisite");
   const mainQuests = quests.filter((q) => q.chain.section === "main");
   const completedCount = quests.filter((q) => q.is_completed).length;
+
+  // Aggregate resources from all quests (sum by name)
+  const aggregatedResources: AggregatedResource[] = Object.values(
+    quests.reduce(
+      (acc, quest) => {
+        for (const r of quest.resources) {
+          const existing = acc[r.name];
+          acc[r.name] = {
+            name: r.name,
+            quantity: (existing?.quantity ?? 0) + r.quantity,
+            is_kamas: r.is_kamas,
+          };
+        }
+        return acc;
+      },
+      {} as Record<string, AggregatedResource>
+    )
+  );
+
+  // Group main quests by sub_section, preserving order of first appearance
+  const mainQuestGroups: Array<{ title: string; quests: typeof mainQuests }> = [];
+  for (const quest of mainQuests) {
+    const title = quest.chain.sub_section ?? "Les quêtes";
+    const existing = mainQuestGroups.find((g) => g.title === title);
+    if (existing) existing.quests.push(quest);
+    else mainQuestGroups.push({ title, quests: [quest] });
+  }
 
   if (loading || !dofus) {
     return (
@@ -89,24 +115,27 @@ export default function DofusDetailScreen() {
             onBulkComplete={() => handleBulkComplete("prerequisite" as QuestSectionType)}
           />
         )}
-        {mainQuests.length > 0 && (
+        {mainQuestGroups.map(({ title, quests: groupQuests }) => (
           <QuestSection
-            title="Chaîne principale"
-            quests={mainQuests}
+            key={title}
+            title={title}
+            quests={groupQuests}
             dofusColor={dofus.color}
             onToggle={handleToggle}
             onBulkComplete={() => handleBulkComplete("main" as QuestSectionType)}
           />
+        ))}
+        {aggregatedResources.length > 0 && (
+          <ResourceSection
+            resources={aggregatedResources}
+            onOpenSheet={() => bottomSheetRef.current?.expand()}
+          />
         )}
-        <ResourceSection
-          resources={resources}
-          onOpenSheet={() => bottomSheetRef.current?.expand()}
-        />
       </ScrollView>
 
       <ResourceBottomSheet
         ref={bottomSheetRef}
-        resources={resources}
+        resources={aggregatedResources}
         dofusColor={dofus.color}
       />
     </View>

@@ -1,9 +1,9 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { BlurView } from "expo-blur";
-import type { Resource } from "@dofus-tracker/types";
+import type { AggregatedResource } from "@dofus-tracker/types";
 
 interface Props {
-  resources: Resource[];
+  resources: AggregatedResource[];
   onOpenSheet: () => void;
 }
 

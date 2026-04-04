@@ -1,34 +1,34 @@
 import { forwardRef, useCallback } from "react";
 import { View, Text, TouchableOpacity, FlatList } from "react-native";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { CustomBottomSheet as BottomSheet, BottomSheetView, type BottomSheetHandle } from "@/components/shared/CustomBottomSheet";
 import { useResources } from "@dofus-tracker/ui";
-import type { Resource } from "@dofus-tracker/types";
+import type { AggregatedResource } from "@dofus-tracker/types";
 
 interface Props {
-  resources: Resource[];
+  resources: AggregatedResource[];
   dofusColor: string;
 }
 
 const PRESETS = [1, 2, 3, 4, 5];
 
-export const ResourceBottomSheet = forwardRef<BottomSheet, Props>(
+function formatNumber(n: number) {
+  return n.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
+}
+
+export const ResourceBottomSheet = forwardRef<BottomSheetHandle, Props>(
   function ResourceBottomSheet({ resources, dofusColor }, ref) {
     const { multiplier, setMultiplier, items, kamas, getQuantity } = useResources(resources);
 
-    const formatNumber = (n: number) =>
-      n.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
-
     const renderItem = useCallback(
-      ({ item }: { item: Resource }) => (
+      ({ item }: { item: AggregatedResource }) => (
         <View className="flex-row items-center gap-3 px-5 py-2.5 border-b border-white/5">
-          <Text className="text-xl w-7 text-center">{item.icon_emoji}</Text>
           <Text className="text-sm text-white flex-1">{item.name}</Text>
           <Text className="text-sm font-bold" style={{ color: dofusColor }}>
             {formatNumber(getQuantity(item))}
           </Text>
         </View>
       ),
-      [dofusColor, getQuantity, formatNumber]
+      [dofusColor, getQuantity]
     );
 
     return (
@@ -45,7 +45,6 @@ export const ResourceBottomSheet = forwardRef<BottomSheet, Props>(
             Ressources nécessaires
           </Text>
 
-          {/* Multiplier */}
           <View className="flex-row gap-2 px-5 py-3 border-b border-white/5">
             {PRESETS.map((p) => (
               <TouchableOpacity
@@ -69,14 +68,14 @@ export const ResourceBottomSheet = forwardRef<BottomSheet, Props>(
 
           <FlatList
             data={items}
-            keyExtractor={(r) => r.id}
+            keyExtractor={(r) => r.name}
             renderItem={renderItem}
-            scrollEnabled={false}
+            scrollEnabled={true}
+            style={{ maxHeight: 300 }}
           />
 
           {kamas.map((k) => (
-            <View key={k.id} className="flex-row items-center gap-3 px-5 py-3 bg-yellow-500/5 border-t border-white/5">
-              <Text className="text-xl w-7 text-center">{k.icon_emoji}</Text>
+            <View key={k.name} className="flex-row items-center gap-3 px-5 py-3 bg-yellow-500/5 border-t border-white/5">
               <Text className="text-sm text-white flex-1">{k.name}</Text>
               <Text className="text-sm font-bold text-yellow-400">
                 {formatNumber(getQuantity(k))}
