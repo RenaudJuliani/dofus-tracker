@@ -1,12 +1,11 @@
 import type { SupabaseClient } from "../client.js";
-import type { QuestWithChain, QuestSection } from "@dofus-tracker/types";
+import type { QuestWithChain, QuestSection, QuestResource } from "@dofus-tracker/types";
 
 export async function getQuestsForDofus(
   client: SupabaseClient,
   dofusId: string,
   characterId: string
 ): Promise<QuestWithChain[]> {
-  // Fetch chains joined with quest data
   const { data: chains, error: chainsError } = await client
     .from("dofus_quest_chains")
     .select(`*, quest:quests(*)`)
@@ -18,23 +17,31 @@ export async function getQuestsForDofus(
 
   const questIds = chains.map((c) => c.quest_id);
 
-  // Fetch completions and shared chains in parallel (both are independent of each other)
-  const [{ data: completions, error: completionsError }, { data: allChains, error: allChainsError }] = await Promise.all([
-    // Fetch which quests this character has completed
+  const [
+    { data: completions, error: completionsError },
+    { data: allChains, error: allChainsError },
+    { data: questResources, error: resourcesError },
+  ] = await Promise.all([
     client
       .from("user_quest_completions")
       .select("quest_id")
       .eq("character_id", characterId)
       .in("quest_id", questIds),
-    // Fetch other Dofus that share these quests (for the cross-dofus badge)
     client
       .from("dofus_quest_chains")
       .select("quest_id, dofus_id")
       .in("quest_id", questIds)
       .neq("dofus_id", dofusId),
+    client
+      .from("quest_resources")
+      .select("*")
+      .in("quest_id", questIds),
   ]);
+
   if (completionsError) throw completionsError;
   if (allChainsError) throw allChainsError;
+  if (resourcesError) throw resourcesError;
+
   const completedSet = new Set((completions ?? []).map((c) => c.quest_id));
 
   const sharedMap = new Map<string, string[]>();
@@ -43,24 +50,32 @@ export async function getQuestsForDofus(
     sharedMap.set(c.quest_id, [...existing, c.dofus_id]);
   }
 
+  const resourcesMap = new Map<string, QuestResource[]>();
+  for (const r of questResources ?? []) {
+    const existing = resourcesMap.get(r.quest_id) ?? [];
+    resourcesMap.set(r.quest_id, [...existing, r as QuestResource]);
+  }
+
   return chains
     .filter((c) => c.quest != null)
     .map((c) => ({
-    ...c.quest,
-    chain: {
-      id: c.id,
-      dofus_id: c.dofus_id,
-      quest_id: c.quest_id,
-      section: c.section as QuestSection,
-      order_index: c.order_index,
-      group_id: c.group_id,
-      quest_types: c.quest_types,
-      combat_count: c.combat_count,
-      is_avoidable: c.is_avoidable,
-    },
-    is_completed: completedSet.has(c.quest_id),
-    shared_dofus_ids: sharedMap.get(c.quest_id) ?? [],
-  }));
+      ...c.quest,
+      chain: {
+        id: c.id,
+        dofus_id: c.dofus_id,
+        quest_id: c.quest_id,
+        section: c.section as QuestSection,
+        sub_section: c.sub_section ?? null,
+        order_index: c.order_index,
+        group_id: c.group_id,
+        quest_types: c.quest_types,
+        combat_count: c.combat_count,
+        is_avoidable: c.is_avoidable,
+      },
+      is_completed: completedSet.has(c.quest_id),
+      shared_dofus_ids: sharedMap.get(c.quest_id) ?? [],
+      resources: resourcesMap.get(c.quest_id) ?? [],
+    }));
 }
 
 export async function toggleQuestCompletion(
@@ -73,7 +88,6 @@ export async function toggleQuestCompletion(
     const { error } = await client
       .from("user_quest_completions")
       .insert({ character_id: characterId, quest_id: questId });
-    // Ignore "already exists" (duplicate key = already completed)
     if (error && error.code !== "23505") throw error;
   } else {
     const { error } = await client
