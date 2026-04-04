@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { parseQuestRow } from "./parsers/quest-row-parser.js";
-import { parseResourceRows } from "./parsers/resource-parser.js";
+import { parseQuestRow, SECTION_MAP, type ParsedQuestRow } from "./parsers/quest-row-parser.js";
+
+type ParsedWithSubSection = ParsedQuestRow & { sub_section: string | null };
 import { assignGroupIds } from "./parsers/group-detector.js";
 import type { SheetTab } from "./sheets-client.js";
 import { nameToSlug } from "./utils.js";
@@ -8,7 +9,6 @@ import { nameToSlug } from "./utils.js";
 export interface SyncReport {
   dofusName: string;
   questsUpserted: number;
-  resourcesUpserted: number;
   errors: string[];
 }
 
@@ -19,12 +19,10 @@ export async function syncTabToSupabase(
   const report: SyncReport = {
     dofusName: tab.dofusName,
     questsUpserted: 0,
-    resourcesUpserted: 0,
     errors: [],
   };
 
   try {
-    // 1. Upsert the Dofus row (type/color/description must be set manually in Studio)
     const { data: dofusRow, error: dofusError } = await client
       .from("dofus")
       .upsert(
@@ -48,25 +46,39 @@ export async function syncTabToSupabase(
 
     const dofusId = dofusRow.id as string;
 
-    // 2. Parse quest rows (skip row 0 = header)
     const dataRows = tab.rows.slice(1);
 
-
-
     let currentSection = "Prérequis";
-    const parsedRows = [];
+    let currentSubSection: string | null = null;
+    const parsedRows: ParsedWithSubSection[] = [];
 
     for (const row of dataRows) {
-      const sectionCell = row[0]?.trim();
-      if (sectionCell) currentSection = sectionCell;
-      const parsed = parseQuestRow(row, currentSection);
-      if (parsed) parsedRows.push(parsed);
+      const sectionInRow = row.map((c) => c?.trim()).find((c) => !!c && c in SECTION_MAP);
+      if (sectionInRow) {
+        currentSection = sectionInRow;
+        currentSubSection = null;
+        continue;
+      }
+
+      const hasHyperlink = row.some(
+        (c) => typeof c === "string" && c.toLowerCase().startsWith("=hyperlink(")
+      );
+      if (hasHyperlink) {
+        const parsed = parseQuestRow(row, currentSection);
+        if (parsed) parsedRows.push({ ...parsed, sub_section: currentSubSection });
+        continue;
+      }
+
+      if (SECTION_MAP[currentSection] === "main") {
+        const textCell = row.map((c) => c?.trim()).find((c) => !!c);
+        if (textCell) currentSubSection = textCell;
+      }
     }
 
-    const rowsWithGroups = assignGroupIds(parsedRows);
+    const rowsWithGroups = assignGroupIds(parsedRows) as Array<
+      ReturnType<typeof assignGroupIds>[number] & { sub_section: string | null }
+    >;
 
-    // 3. Upsert quests + chain entries in order
-    // order_index is global across sections — db queries order by section first, then order_index
     let orderIndex = 0;
     for (const row of rowsWithGroups) {
       const slug = nameToSlug(row.name);
@@ -92,6 +104,7 @@ export async function syncTabToSupabase(
             dofus_id: dofusId,
             quest_id: questRow.id,
             section: row.section,
+            sub_section: row.sub_section,
             order_index: orderIndex++,
             group_id: row.group_id,
             quest_types: row.quest_types,
@@ -107,25 +120,6 @@ export async function syncTabToSupabase(
       }
 
       report.questsUpserted++;
-    }
-
-    // 4. Replace resources for this Dofus
-    const parsedResources = parseResourceRows(dataRows);
-
-    // Always delete existing resources (handles case where sheet now has none)
-    const { error: deleteError } = await client.from("resources").delete().eq("dofus_id", dofusId);
-    if (deleteError) {
-      report.errors.push(`Resources delete failed: ${deleteError.message}`);
-    } else if (parsedResources.length > 0) {
-      const { error: resError } = await client
-        .from("resources")
-        .insert(parsedResources.map((r) => ({ ...r, dofus_id: dofusId })));
-
-      if (resError) {
-        report.errors.push(`Resources insert failed: ${resError.message}`);
-      } else {
-        report.resourcesUpserted = parsedResources.length;
-      }
     }
   } catch (err) {
     report.errors.push(

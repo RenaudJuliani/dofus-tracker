@@ -19,9 +19,10 @@ export interface ParsedQuestRow {
   is_avoidable: boolean;
 }
 
-const SECTION_MAP: Record<string, QuestSection> = {
+export const SECTION_MAP: Record<string, QuestSection> = {
   "Prérequis": "prerequisite",
   "Chaîne principale": "main",
+  "Les quêtes": "main",
 };
 
 const VALID_QUEST_TYPES = new Set<QuestType>([
