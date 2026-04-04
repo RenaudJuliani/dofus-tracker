@@ -1,12 +1,12 @@
 import { useState } from "react";
-import type { Resource } from "@dofus-tracker/types";
+import type { AggregatedResource } from "@dofus-tracker/types";
 
-export function useResources(resources: Resource[]) {
+export function useResources(resources: AggregatedResource[]) {
   const [multiplier, setMultiplier] = useState(1);
 
   const items = resources.filter((r) => !r.is_kamas);
   const kamas = resources.filter((r) => r.is_kamas);
-  const getQuantity = (r: Resource) => r.quantity_per_character * multiplier;
+  const getQuantity = (r: AggregatedResource) => r.quantity * multiplier;
 
   return { multiplier, setMultiplier, items, kamas, getQuantity };
 }
