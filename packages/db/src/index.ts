@@ -18,4 +18,5 @@ export {
   getQuestsForDofus,
   toggleQuestCompletion,
   bulkCompleteSection,
+  getAggregatedResourcesForDofus,
 } from "./queries/quests.js";

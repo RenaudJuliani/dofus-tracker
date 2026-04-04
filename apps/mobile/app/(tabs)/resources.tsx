@@ -2,28 +2,28 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { Stack } from "expo-router";
 import { BlurView } from "expo-blur";
-import BottomSheet from "@gorhom/bottom-sheet";
-import { getDofusList, getResourcesForDofus } from "@dofus-tracker/db";
+import type { BottomSheetHandle } from "@/components/shared/CustomBottomSheet";
+import { getDofusList, getAggregatedResourcesForDofus } from "@dofus-tracker/db";
 import { ResourceBottomSheet } from "@/components/resources/ResourceBottomSheet";
 import { supabase } from "@/lib/supabase";
-import type { Dofus, Resource } from "@dofus-tracker/types";
+import type { Dofus, AggregatedResource } from "@dofus-tracker/types";
 
 interface DofusResources {
   dofus: Dofus;
-  resources: Resource[];
+  resources: AggregatedResource[];
 }
 
 export default function ResourcesScreen() {
   const [data, setData] = useState<DofusResources[]>([]);
   const [selected, setSelected] = useState<DofusResources | null>(null);
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetHandle>(null);
 
   const loadData = useCallback(async () => {
     const allDofus = await getDofusList(supabase);
     const results = await Promise.all(
       allDofus.map(async (dofus) => ({
         dofus,
-        resources: await getResourcesForDofus(supabase, dofus.id),
+        resources: await getAggregatedResourcesForDofus(supabase, dofus.id),
       }))
     );
     setData(results.filter((r) => r.resources.length > 0));

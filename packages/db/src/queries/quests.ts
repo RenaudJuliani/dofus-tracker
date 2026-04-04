@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "../client.js";
-import type { QuestWithChain, QuestSection, QuestResource } from "@dofus-tracker/types";
+import type { QuestWithChain, QuestSection, QuestResource, AggregatedResource } from "@dofus-tracker/types";
 
 export async function getQuestsForDofus(
   client: SupabaseClient,
@@ -122,4 +122,36 @@ export async function bulkCompleteSection(
     .from("user_quest_completions")
     .upsert(rows, { onConflict: "character_id,quest_id", ignoreDuplicates: true });
   if (error) throw error;
+}
+
+export async function getAggregatedResourcesForDofus(
+  client: SupabaseClient,
+  dofusId: string
+): Promise<AggregatedResource[]> {
+  const { data: chains, error: chainsError } = await client
+    .from("dofus_quest_chains")
+    .select("quest_id")
+    .eq("dofus_id", dofusId);
+  if (chainsError) throw chainsError;
+  if (!chains || chains.length === 0) return [];
+
+  const questIds = chains.map((c) => c.quest_id);
+
+  const { data: rows, error: resourcesError } = await client
+    .from("quest_resources")
+    .select("name, quantity, is_kamas")
+    .in("quest_id", questIds);
+  if (resourcesError) throw resourcesError;
+
+  const map = new Map<string, AggregatedResource>();
+  for (const r of rows ?? []) {
+    const existing = map.get(r.name);
+    map.set(r.name, {
+      name: r.name,
+      quantity: (existing?.quantity ?? 0) + r.quantity,
+      is_kamas: r.is_kamas,
+    });
+  }
+
+  return Array.from(map.values());
 }
