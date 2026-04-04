@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import type { Resource } from "@dofus-tracker/types";
+import type { AggregatedResource } from "@dofus-tracker/types";
 
-const resources: Resource[] = [
-  { id: "r1", name: "Pierre précieuse", icon_emoji: "💎", dofus_id: "d1", quantity_per_character: 10, is_kamas: false },
-  { id: "r2", name: "Kamas", icon_emoji: "💰", dofus_id: "d1", quantity_per_character: 50000, is_kamas: true },
+const resources: AggregatedResource[] = [
+  { name: "Pierre précieuse", quantity: 10, is_kamas: false },
+  { name: "Kamas", quantity: 50000, is_kamas: true },
 ];
 
 const { ResourcePanel } = await import("@/components/dofus/ResourcePanel");
@@ -24,11 +24,5 @@ describe("ResourcePanel", () => {
     fireEvent.click(screen.getByText("×3"));
     expect(screen.getByText("30")).toBeInTheDocument();
     expect(screen.getByText(/150[\s\u00a0]?000/)).toBeInTheDocument();
-  });
-
-  it("renders resource emoji icons", () => {
-    render(<ResourcePanel resources={resources} dofusColor="#22c55e" />);
-    expect(screen.getByText("💎")).toBeInTheDocument();
-    expect(screen.getByText("💰")).toBeInTheDocument();
   });
 });
