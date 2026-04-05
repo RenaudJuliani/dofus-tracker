@@ -1,50 +1,34 @@
 import { createClient } from "@supabase/supabase-js";
-import { fetchAllSheetTabs } from "./sheets-client.js";
-import { syncTabToSupabase } from "./upsert.js";
+import { fetchAppsScriptData } from "./apps-script-client.js";
+import { syncAllFromAppsScript } from "./sync-apps-script-upsert.js";
 
 async function main() {
-  const sheetId = process.env.GOOGLE_SHEET_ID;
-  const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH ?? "./service-account.json";
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const appsScriptUrl = process.env.APPS_SCRIPT_URL;
 
-  if (!sheetId || !supabaseUrl || !serviceRoleKey) {
-    console.error(
-      "Missing required env vars: GOOGLE_SHEET_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY"
-    );
+  if (!supabaseUrl || !serviceRoleKey || !appsScriptUrl) {
+    console.error("Missing required env vars: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, APPS_SCRIPT_URL");
     process.exit(1);
   }
 
   const client = createClient(supabaseUrl, serviceRoleKey);
 
-  console.log("📋 Fetching Google Sheet tabs...");
-  const tabs = await fetchAllSheetTabs(sheetId, keyPath);
-  console.log(
-    `Found ${tabs.length} Dofus tab(s): ${tabs.map((t) => t.dofusName).join(", ")}`
-  );
+  console.log("📦 Fetching Apps Script data...");
+  const data = await fetchAppsScriptData(appsScriptUrl);
+  console.log(`Last update: ${data.metadata.lastUpdate}`);
 
-  let totalQuests = 0;
-  let totalResources = 0;
-  const allErrors: string[] = [];
+  const dofusCount = Object.keys(data.dofus).length;
+  console.log(`Found ${dofusCount} Dofus in Apps Script`);
 
-  for (const tab of tabs) {
-    process.stdout.write(`⚙️  Syncing "${tab.dofusName}"... `);
-    const report = await syncTabToSupabase(tab, client);
-    console.log(`✅ ${report.questsUpserted} quests, ${report.resourcesUpserted} resources`);
+  console.log("⚙️  Syncing quests, chains, and resources...");
+  const report = await syncAllFromAppsScript(data, client);
 
-    if (report.errors.length > 0) {
-      console.warn(`   ⚠️  ${report.errors.length} error(s):`, report.errors);
-      allErrors.push(...report.errors);
-    }
+  console.log(`\n✅ Sync complete: ${report.questsUpserted} quests, ${report.resourcesUpserted} resources`);
 
-    totalQuests += report.questsUpserted;
-    totalResources += report.resourcesUpserted;
-  }
-
-  console.log(`\n✅ Sync complete: ${totalQuests} quests, ${totalResources} resources`);
-
-  if (allErrors.length > 0) {
-    console.error(`❌ ${allErrors.length} total error(s) — check output above`);
+  if (report.errors.length > 0) {
+    console.error(`❌ ${report.errors.length} error(s):`);
+    report.errors.forEach((e) => console.error("  -", e));
     process.exit(1);
   }
 }

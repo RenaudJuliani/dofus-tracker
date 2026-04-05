@@ -13,6 +13,7 @@ const questBase: QuestWithChain = {
     dofus_id: "d1",
     quest_id: "q1",
     section: "main",
+    sub_section: null,
     order_index: 1,
     group_id: null,
     quest_types: ["combat_solo"],
@@ -21,6 +22,7 @@ const questBase: QuestWithChain = {
   },
   is_completed: false,
   shared_dofus_ids: [],
+  resources: [],
 };
 
 const { QuestItem } = await import("@/components/dofus/QuestItem");

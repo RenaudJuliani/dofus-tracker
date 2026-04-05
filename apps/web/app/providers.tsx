@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -12,7 +12,7 @@ export function useSupabase(): SupabaseClient {
   return ctx;
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children }: { children: ReactNode }) {
   const [supabase] = useState(() => createClient());
   return (
     <SupabaseContext.Provider value={supabase}>

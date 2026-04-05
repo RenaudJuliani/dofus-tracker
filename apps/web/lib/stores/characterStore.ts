@@ -1,17 +1,7 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createCharacterStore } from "@dofus-tracker/ui";
+import { createJSONStorage, type PersistStorage } from "zustand/middleware";
 
-interface CharacterStore {
-  activeCharacterId: string | null;
-  setActiveCharacterId: (id: string | null) => void;
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const storage = createJSONStorage(() => localStorage) as PersistStorage<any>;
 
-export const useCharacterStore = create<CharacterStore>()(
-  persist(
-    (set) => ({
-      activeCharacterId: null,
-      setActiveCharacterId: (id) => set({ activeCharacterId: id }),
-    }),
-    { name: "dofus-tracker-character" }
-  )
-);
+export const useCharacterStore = createCharacterStore(storage);

@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Dofus Tracker",
+    "slug": "dofus-tracker",
+    "version": "1.0.0",
+    "scheme": "dofustracker",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#080e0a"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dofustracker.app"
+    },
+    "android": {
+      "package": "com.dofustracker.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#080e0a"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

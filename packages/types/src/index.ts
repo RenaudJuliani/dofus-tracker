@@ -37,6 +37,7 @@ export interface DofusQuestChain {
   dofus_id: string;
   quest_id: string;
   section: QuestSection;
+  sub_section: string | null;
   order_index: number;
   group_id: string | null;
   quest_types: QuestType[];
@@ -44,12 +45,19 @@ export interface DofusQuestChain {
   is_avoidable: boolean;
 }
 
-export interface Resource {
+/** Ressource requise pour une quête spécifique */
+export interface QuestResource {
   id: string;
+  quest_id: string;
   name: string;
-  icon_emoji: string;
-  dofus_id: string;
-  quantity_per_character: number;
+  quantity: number;
+  is_kamas: boolean;
+}
+
+/** Ressource agrégée (somme de toutes les quêtes d'un Dofus) — calculée côté client */
+export interface AggregatedResource {
+  name: string;
+  quantity: number;
   is_kamas: boolean;
 }
 
@@ -64,7 +72,7 @@ export interface Character {
   id: string;
   user_id: string;
   name: string;
-  character_class: string;  // renamed from 'class' (reserved keyword)
+  character_class: string;
   created_at: string;
 }
 
@@ -83,23 +91,15 @@ export interface DofusProgress {
   dofus_name: string;
   total_quests: number;
   completed_quests: number;
-  /**
-   * Percentage 0-100. Computed via SQL ROUND(numeric).
-   * Supabase may return this as a string — cast with Number() in packages/db.
-   */
   progress_pct: number;
 }
 
-/** Quest enriched with chain metadata + completion status for a given character */
+/** Quest enriched with chain metadata + completion status + per-quest resources */
 export interface QuestWithChain extends Quest {
   chain: DofusQuestChain;
   is_completed: boolean;
-  /**
-   * IDs of other Dofus that also require this quest.
-   * Computed via a secondary query on dofus_quest_chains — not a DB column.
-   * Returns [] if this quest is unique to one Dofus.
-   */
   shared_dofus_ids: string[];
+  resources: QuestResource[];
 }
 
 export interface QuestProgressCounts {
@@ -107,10 +107,10 @@ export interface QuestProgressCounts {
   total: number;
 }
 
-/** Dofus enriched with quest lists + resources for the detail page */
+/** Dofus enriched with quest lists + aggregated resources for the detail page */
 export interface DofusDetail extends Dofus {
   prerequisites: QuestWithChain[];
   main_quests: QuestWithChain[];
-  resources: Resource[];
+  resources: AggregatedResource[];
   progress: QuestProgressCounts;
 }
