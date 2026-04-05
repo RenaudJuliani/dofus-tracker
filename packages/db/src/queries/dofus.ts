@@ -61,3 +61,18 @@ export async function getDofusProgressForCharacter(
     progress_pct: row.progress_pct != null ? Number(row.progress_pct) : 0,
   })) as DofusProgress[];
 }
+
+export async function getAllProgressForUser(
+  client: SupabaseClient,
+  userId: string
+): Promise<DofusProgress[]> {
+  const { data, error } = await client
+    .from("v_dofus_progress")
+    .select("*")
+    .eq("user_id", userId);
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    ...row,
+    progress_pct: row.progress_pct != null ? Number(row.progress_pct) : 0,
+  })) as DofusProgress[];
+}

@@ -39,3 +39,18 @@ export async function deleteCharacter(
     .eq("id", characterId);
   if (error) throw error;
 }
+
+export async function updateCharacter(
+  client: SupabaseClient,
+  characterId: string,
+  name: string
+): Promise<Character> {
+  const { data, error } = await client
+    .from("characters")
+    .update({ name })
+    .eq("id", characterId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
