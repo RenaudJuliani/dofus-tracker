@@ -54,8 +54,9 @@ export default function ProfileScreen() {
   }
 
   async function handleDelete(charId: string) {
+    if (!userId) return;
     try {
-      await deleteCharacter(supabase, charId);
+      await deleteCharacter(supabase, charId, userId);
       setCharacters((prev) => prev.filter((c) => c.id !== charId));
       if (activeCharacterId === charId) {
         const remaining = characters.filter((c) => c.id !== charId);

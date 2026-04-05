@@ -6,12 +6,14 @@ export {
   getDofusById,
   getDofusBySlug,
   getDofusProgressForCharacter,
+  getAllProgressForUser,
 } from "./queries/dofus.js";
 
 export {
   getCharacters,
   createCharacter,
   deleteCharacter,
+  updateCharacter,
 } from "./queries/characters.js";
 
 export {

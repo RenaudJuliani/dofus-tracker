@@ -24,8 +24,8 @@ export async function Navbar({ userId }: Props) {
         <div className="flex items-center gap-3">
           <CharacterSelector characters={characters} />
 
-          <Link href="/profile" className="text-sm text-gray-400 hover:text-white transition-colors">
-            Profil
+          <Link href="/characters" className="text-sm text-gray-400 hover:text-white transition-colors">
+            Personnages
           </Link>
 
           <form action="/auth/signout" method="post">

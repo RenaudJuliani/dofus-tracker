@@ -31,11 +31,30 @@ export async function createCharacter(
 
 export async function deleteCharacter(
   client: SupabaseClient,
-  characterId: string
+  characterId: string,
+  userId: string
 ): Promise<void> {
   const { error } = await client
     .from("characters")
     .delete()
-    .eq("id", characterId);
+    .eq("id", characterId)
+    .eq("user_id", userId);
   if (error) throw error;
+}
+
+export async function updateCharacter(
+  client: SupabaseClient,
+  characterId: string,
+  userId: string,
+  name: string
+): Promise<Character> {
+  const { data, error } = await client
+    .from("characters")
+    .update({ name })
+    .eq("id", characterId)
+    .eq("user_id", userId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 }

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "tsx --env-file=../../.env src/index.ts",
+    "upload-images": "tsx --env-file=../../.env src/upload-dofus-images.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
