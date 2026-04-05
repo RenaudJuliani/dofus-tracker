@@ -1,3 +1,4 @@
+import type { QuestSection } from "@dofus-tracker/types";
 import { nameToSlug } from "./utils.js";
 
 export interface AppsScriptQuest {
@@ -27,11 +28,67 @@ export interface QuestWithResources {
   resources: Array<{ name: string; quantity: number; is_kamas: boolean }>;
 }
 
+export interface QuestChainEntry {
+  dofusName: string;
+  dofusSlug: string;
+  section: QuestSection;
+  subSection: string | null;
+  questName: string;
+  questSlug: string;
+  orderIndex: number;
+  resources: Array<{ name: string; quantity: number; is_kamas: boolean }>;
+}
+
+const SECTION_MAP: Record<string, QuestSection> = {
+  "Prérequis": "prerequisite",
+  "Chaîne principale": "main",
+  "Les quêtes": "main",
+};
+
 /** Fetch the Apps Script web endpoint and return parsed JSON */
 export async function fetchAppsScriptData(url: string): Promise<AppsScriptData> {
   const res = await fetch(url, { redirect: "follow" });
   if (!res.ok) throw new Error(`Apps Script fetch failed: ${res.status} ${res.statusText}`);
   return res.json() as Promise<AppsScriptData>;
+}
+
+/**
+ * Flatten all Dofus/sections/sous_sections into a full ordered list of quests
+ * with their chain metadata and resources.
+ */
+export function extractAllQuests(data: AppsScriptData): QuestChainEntry[] {
+  const entries: QuestChainEntry[] = [];
+
+  for (const [dofusName, sections] of Object.entries(data.dofus)) {
+    const dofusSlug = nameToSlug(dofusName);
+    let orderIndex = 0;
+
+    for (const section of sections) {
+      const sectionKey = section.titre?.trim() ?? "";
+      const mappedSection: QuestSection = SECTION_MAP[sectionKey] ?? "main";
+
+      for (const subSection of section.sous_sections) {
+        for (const quest of subSection.quetes) {
+          entries.push({
+            dofusName,
+            dofusSlug,
+            section: mappedSection,
+            subSection: null, // overridden by sub-section-overrides.ts at sync time
+            questName: quest.nom,
+            questSlug: nameToSlug(quest.nom),
+            orderIndex: orderIndex++,
+            resources: quest.ressources.map((r) => ({
+              name: r.nom,
+              quantity: r.quantite,
+              is_kamas: r.nom.toLowerCase() === "kamas",
+            })),
+          });
+        }
+      }
+    }
+  }
+
+  return entries;
 }
 
 /**

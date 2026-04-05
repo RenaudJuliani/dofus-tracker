@@ -144,10 +144,10 @@ describe("parseQuestRow", () => {
     expect(result?.is_avoidable).toBe(false);
   });
 
-  it("falls back to row[1] plain text when no HYPERLINK formula is present", () => {
+  it("falls back to row[1] plain text and generates URL when no HYPERLINK formula is present", () => {
     const row: RawSheetRow = ["Prérequis", "Plain text quest", "", "combat_solo", "", "", ""];
     const result = parseQuestRow(row, "Prérequis");
     expect(result?.name).toBe("Plain text quest");
-    expect(result?.dofuspourlesnoobs_url).toBeNull();
+    expect(result?.dofuspourlesnoobs_url).toBe("https://www.dofuspourlesnoobs.com/plain-text-quest.html");
   });
 });

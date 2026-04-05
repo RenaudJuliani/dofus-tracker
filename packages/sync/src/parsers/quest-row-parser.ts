@@ -1,4 +1,5 @@
 import type { QuestSection, QuestType } from "@dofus-tracker/types";
+import { nameToSlug } from "../utils.js";
 
 export type RawSheetRow = string[];
 
@@ -47,7 +48,7 @@ export function parseQuestRow(
   const hyperlink = hyperlinkCell ? parseHyperlink(hyperlinkCell) : null;
   const fallbackName = typeof row[1] === "string" ? row[1].trim() : undefined;
   const name = hyperlink?.name ?? fallbackName;
-  const url = hyperlink?.url ?? null;
+  const url = hyperlink?.url ?? `https://www.dofuspourlesnoobs.com/${nameToSlug(name)}.html`;
 
   if (!name?.trim()) return null;
 

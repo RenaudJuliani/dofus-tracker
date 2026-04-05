@@ -63,12 +63,15 @@ export async function syncTabToSupabase(
       const hasHyperlink = row.some(
         (c) => typeof c === "string" && c.toLowerCase().startsWith("=hyperlink(")
       );
-      if (hasHyperlink) {
+      const hasPlainTextName = !hasHyperlink && typeof row[1] === "string" && row[1].trim().length > 0;
+
+      if (hasHyperlink || hasPlainTextName) {
         const parsed = parseQuestRow(row, currentSection);
         if (parsed) parsedRows.push({ ...parsed, sub_section: currentSubSection });
         continue;
       }
 
+      // Sub-section marker: text in row[0], row[1] empty
       if (SECTION_MAP[currentSection] === "main") {
         const textCell = row.map((c) => c?.trim()).find((c) => !!c);
         if (textCell) currentSubSection = textCell;
