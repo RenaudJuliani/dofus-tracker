@@ -48,7 +48,7 @@ export function parseQuestRow(
   const hyperlink = hyperlinkCell ? parseHyperlink(hyperlinkCell) : null;
   const fallbackName = typeof row[1] === "string" ? row[1].trim() : undefined;
   const name = hyperlink?.name ?? fallbackName;
-  const url = hyperlink?.url ?? `https://www.dofuspourlesnoobs.com/${nameToSlug(name)}.html`;
+  const url = hyperlink?.url ?? `https://www.dofuspourlesnoobs.com/${nameToSlug(name ?? "")}.html`;
 
   if (!name?.trim()) return null;
 
