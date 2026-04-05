@@ -16,7 +16,7 @@ interface Props {
   onDeleted: () => void;
 }
 
-export function CharacterDetail({ character, dofusList, progressForCharacter, onRefresh, onDeleted }: Props) {
+export function CharacterDetail({ character, dofusList, progressForCharacter, userId: _userId, onRefresh, onDeleted }: Props) {
   const supabase = useSupabase();
   const setActiveCharacterId = useCharacterStore((s) => s.setActiveCharacterId);
 
