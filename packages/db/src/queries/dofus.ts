@@ -4,14 +4,14 @@ import type { Dofus, DofusProgress } from "@dofus-tracker/types";
 export async function getDofusList(client: SupabaseClient): Promise<Dofus[]> {
   const { data, error } = await client
     .from("dofus")
-    .select("id, name, slug, type, color, description, image_url, quest_chains(count)")
+    .select("id, name, slug, type, color, description, image_url, dofus_quest_chains(count)")
     .in("type", ["primordial", "secondaire"])
     .order("type", { ascending: true })
     .order("name", { ascending: true });
   if (error) throw error;
   return (data ?? [])
-    .filter((d) => (d.quest_chains as unknown as { count: number }[])[0]?.count > 0)
-    .map(({ quest_chains: _, ...rest }) => rest as Dofus);
+    .filter((d) => (d.dofus_quest_chains as unknown as { count: number }[])[0]?.count > 0)
+    .map(({ dofus_quest_chains: _, ...rest }) => rest as Dofus);
 }
 
 export async function getDofusById(
