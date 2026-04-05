@@ -6,7 +6,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@dofus-tracker/db": "workspace:*",
@@ -42,6 +43,7 @@
     "@babel/core": "^7.24.0",
     "@types/node": "^20.0.0",
     "@types/react": "~19.1.10",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
   }
 }
