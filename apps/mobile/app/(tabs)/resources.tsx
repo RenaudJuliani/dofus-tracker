@@ -6,7 +6,11 @@ import type { BottomSheetHandle } from "@/components/shared/CustomBottomSheet";
 import { getDofusList, getAggregatedResourcesForDofus } from "@dofus-tracker/db";
 import { ResourceBottomSheet } from "@/components/resources/ResourceBottomSheet";
 import { supabase } from "@/lib/supabase";
+import { readCache, writeCache } from "@/lib/cache";
+import { useToast } from "@/lib/ToastContext";
 import type { Dofus, AggregatedResource } from "@dofus-tracker/types";
+
+const RESOURCES_CACHE_KEY = "cache:resources:all";
 
 interface DofusResources {
   dofus: Dofus;
@@ -17,17 +21,30 @@ export default function ResourcesScreen() {
   const [data, setData] = useState<DofusResources[]>([]);
   const [selected, setSelected] = useState<DofusResources | null>(null);
   const bottomSheetRef = useRef<BottomSheetHandle>(null);
+  const { show } = useToast();
 
   const loadData = useCallback(async () => {
-    const allDofus = await getDofusList(supabase);
-    const results = await Promise.all(
-      allDofus.map(async (dofus) => ({
-        dofus,
-        resources: await getAggregatedResourcesForDofus(supabase, dofus.id),
-      }))
-    );
-    setData(results.filter((r) => r.resources.length > 0));
-  }, []);
+    try {
+      const allDofus = await getDofusList(supabase);
+      const results = await Promise.all(
+        allDofus.map(async (dofus) => ({
+          dofus,
+          resources: await getAggregatedResourcesForDofus(supabase, dofus.id),
+        }))
+      );
+      const filtered = results.filter((r) => r.resources.length > 0);
+      setData(filtered);
+      await writeCache(RESOURCES_CACHE_KEY, filtered);
+    } catch {
+      const cached = await readCache<DofusResources[]>(RESOURCES_CACHE_KEY);
+      if (cached) {
+        setData(cached);
+        show("Mode hors-ligne — données locales");
+      } else {
+        show("Erreur de chargement");
+      }
+    }
+  }, [show]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
