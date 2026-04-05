@@ -6,8 +6,8 @@ module.exports = {
     extend: {
       colors: {
         "dofus-green": "#4ade80",
-        "dofus-dark": "#080e0a",
-        "glass-bg": "rgba(8,16,10,0.64)",
+        "dofus-dark": "#0f1f14",
+        "glass-bg": "rgba(15,31,20,0.72)",
         "glass-border": "rgba(255,255,255,0.09)",
       },
     },

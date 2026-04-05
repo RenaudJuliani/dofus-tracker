@@ -1,14 +1,6 @@
-import { useEffect } from "react";
-import { View } from "react-native";
+import { useEffect, useRef } from "react";
+import { View, Animated, Easing } from "react-native";
 import { Image } from "expo-image";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-  Easing,
-} from "react-native-reanimated";
 
 interface Props {
   imageUrl: string | null;
@@ -17,25 +9,29 @@ interface Props {
 }
 
 export function EggImage({ imageUrl, color, size = 80 }: Props) {
-  const translateY = useSharedValue(0);
+  const translateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    translateY.value = withRepeat(
-      withSequence(
-        withTiming(-8, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
-        withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) })
-      ),
-      -1,
-      false
-    );
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(translateY, {
+          toValue: -8,
+          duration: 1800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 1800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
   }, [translateY]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
   return (
-    <Animated.View style={[{ width: size, height: size }, animatedStyle]}>
+    <Animated.View style={[{ width: size, height: size }, { transform: [{ translateY }] }]}>
       {imageUrl ? (
         <Image
           source={{ uri: imageUrl }}

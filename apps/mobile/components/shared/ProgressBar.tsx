@@ -1,10 +1,5 @@
-import { View, Text } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  withTiming,
-  useSharedValue,
-} from "react-native-reanimated";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { View, Text, Animated } from "react-native";
 
 interface Props {
   pct: number;
@@ -13,15 +8,15 @@ interface Props {
 }
 
 export function ProgressBar({ pct, color, showLabel = false }: Props) {
-  const width = useSharedValue(0);
+  const width = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    width.value = withTiming(pct, { duration: 600 });
+    Animated.timing(width, {
+      toValue: pct,
+      duration: 600,
+      useNativeDriver: false,
+    }).start();
   }, [pct, width]);
-
-  const barStyle = useAnimatedStyle(() => ({
-    width: `${width.value}%`,
-  }));
 
   return (
     <View>
@@ -38,7 +33,12 @@ export function ProgressBar({ pct, color, showLabel = false }: Props) {
               borderRadius: 999,
               backgroundColor: color,
             },
-            barStyle,
+            {
+              width: width.interpolate({
+                inputRange: [0, 100],
+                outputRange: ["0%", "100%"],
+              }),
+            },
           ]}
         />
       </View>

@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { View, Text } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useFocusEffect } from "expo-router";
 import { getDofusList, getDofusProgressForCharacter, getCharacters } from "@dofus-tracker/db";
 import { DofusGrid } from "@/components/home/DofusGrid";
 import { CharacterSelector } from "@/components/shared/CharacterSelector";
@@ -35,7 +35,7 @@ export default function MesDofusScreen() {
     setRefreshing(false);
   }, [activeCharacterId]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   return (
     <View className="flex-1 bg-dofus-dark">
@@ -51,7 +51,9 @@ export default function MesDofusScreen() {
         </View>
       ) : (
         <DofusGrid
-          dofusList={dofusList}
+          dofusList={dofusList.filter(
+            (d) => progressMap.size === 0 || (progressMap.get(d.id)?.total_quests ?? 0) > 0
+          )}
           progressMap={progressMap}
           refreshing={refreshing}
           onRefresh={loadData}

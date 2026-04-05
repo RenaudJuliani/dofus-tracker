@@ -1,5 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native";
-import { router } from "expo-router";
+import { View, Text } from "react-native";
 import { BlurView } from "expo-blur";
 import { EggImage } from "@/components/shared/EggImage";
 import { ProgressBar } from "@/components/shared/ProgressBar";
@@ -12,21 +11,10 @@ interface Props {
   completedCount: number;
 }
 
-export function DofusHeader({ dofus, allDofus, quests, completedCount }: Props) {
+export function DofusHeader({ dofus, quests, completedCount }: Props) {
   const total = quests.length;
   const remaining = total - completedCount;
   const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
-
-  const sharedDofusIds = new Set(quests.flatMap((q) => q.shared_dofus_ids));
-  const sharedDofus = allDofus.filter(
-    (d) => sharedDofusIds.has(d.id) && d.id !== dofus.id
-  );
-  const sharedCountPerDofus = new Map<string, number>();
-  for (const quest of quests) {
-    for (const did of quest.shared_dofus_ids) {
-      sharedCountPerDofus.set(did, (sharedCountPerDofus.get(did) ?? 0) + 1);
-    }
-  }
 
   return (
     <BlurView intensity={60} tint="dark" className="rounded-2xl overflow-hidden mb-4">
@@ -48,34 +36,6 @@ export function DofusHeader({ dofus, allDofus, quests, completedCount }: Props) 
           <Text className="text-xl font-extrabold" style={{ color: dofus.color }}>{pct}%</Text>
         </View>
         <ProgressBar pct={pct} color={dofus.color} />
-
-        {sharedDofus.length > 0 && (
-          <View className="mt-4 pt-4 border-t border-white/5">
-            <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              Quêtes partagées avec
-            </Text>
-            <View className="flex-row flex-wrap gap-2">
-              {sharedDofus.map((d) => (
-                <TouchableOpacity
-                  key={d.id}
-                  onPress={() => router.push(`/dofus/${d.slug}`)}
-                  style={{
-                    backgroundColor: `${d.color}22`,
-                    borderColor: `${d.color}44`,
-                    borderWidth: 1,
-                    borderRadius: 8,
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                  }}
-                >
-                  <Text style={{ color: d.color, fontSize: 12, fontWeight: "500" }}>
-                    {d.name} ×{sharedCountPerDofus.get(d.id)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
       </View>
     </BlurView>
   );

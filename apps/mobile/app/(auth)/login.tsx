@@ -21,8 +21,10 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const redirectUri = makeRedirectUri({ scheme: "dofustracker", path: "auth/callback" });
+  console.log("[OAuth] redirectUri =", redirectUri);
 
   async function handleLogin() {
     setLoading(true);
@@ -83,14 +85,22 @@ export default function LoginScreen() {
             value={email}
             onChangeText={setEmail}
           />
-          <TextInput
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white mb-6"
-            placeholder="Mot de passe"
-            placeholderTextColor="#6b7280"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+          <View className="relative mb-6">
+            <TextInput
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white pr-12"
+              placeholder="Mot de passe"
+              placeholderTextColor="#6b7280"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword((v) => !v)}
+              className="absolute right-4 top-0 bottom-0 justify-center"
+            >
+              <Text className="text-gray-400 text-xs">{showPassword ? "Cacher" : "Voir"}</Text>
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity
             onPress={handleLogin}

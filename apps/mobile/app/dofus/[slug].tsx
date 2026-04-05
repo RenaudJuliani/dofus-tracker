@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { ScrollView, View, Text, ActivityIndicator } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams } from "expo-router";
 import type { BottomSheetHandle } from "@/components/shared/CustomBottomSheet";
 import {
@@ -25,6 +26,7 @@ export default function DofusDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const activeCharacterId = useCharacterStore((s) => s.activeCharacterId);
   const bottomSheetRef = useRef<BottomSheetHandle>(null);
+  const { top } = useSafeAreaInsets();
 
   const [dofus, setDofus] = useState<Dofus | null>(null);
   const [allDofus, setAllDofus] = useState<Dofus[]>([]);
@@ -99,7 +101,7 @@ export default function DofusDetailScreen() {
   return (
     <View className="flex-1 bg-dofus-dark">
       <Stack.Screen options={{ title: dofus.name, headerBackTitle: "Mes Dofus" }} />
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingTop: top + 16 }}>
         <DofusHeader
           dofus={dofus}
           allDofus={allDofus}

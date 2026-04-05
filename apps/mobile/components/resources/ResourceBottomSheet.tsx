@@ -71,7 +71,7 @@ export const ResourceBottomSheet = forwardRef<BottomSheetHandle, Props>(
             keyExtractor={(r) => r.name}
             renderItem={renderItem}
             scrollEnabled={true}
-            style={{ maxHeight: 300 }}
+            style={{ flex: 1 }}
           />
 
           {kamas.map((k) => (
