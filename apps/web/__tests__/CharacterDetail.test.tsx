@@ -72,7 +72,7 @@ describe("CharacterDetail", () => {
     await userEvent.clear(input);
     await userEvent.type(input, "TougliRenommé");
     fireEvent.keyDown(input, { key: "Enter" });
-    await waitFor(() => expect(mockUpdateCharacter).toHaveBeenCalledWith(expect.any(Object), "c1", "TougliRenommé"));
+    await waitFor(() => expect(mockUpdateCharacter).toHaveBeenCalledWith(expect.any(Object), "c1", "u1", "TougliRenommé"));
     await waitFor(() => expect(onRefresh).toHaveBeenCalled());
   });
 
@@ -82,7 +82,7 @@ describe("CharacterDetail", () => {
     fireEvent.click(screen.getByRole("button", { name: /supprimer/i }));
     // Confirmation step
     fireEvent.click(screen.getByRole("button", { name: /confirmer/i }));
-    await waitFor(() => expect(mockDeleteCharacter).toHaveBeenCalledWith(expect.any(Object), "c1"));
+    await waitFor(() => expect(mockDeleteCharacter).toHaveBeenCalledWith(expect.any(Object), "c1", "u1"));
     await waitFor(() => expect(onDeleted).toHaveBeenCalled());
   });
 });

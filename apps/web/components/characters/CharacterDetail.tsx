@@ -16,7 +16,7 @@ interface Props {
   onDeleted: () => void;
 }
 
-export function CharacterDetail({ character, dofusList, progressForCharacter, userId: _userId, onRefresh, onDeleted }: Props) {
+export function CharacterDetail({ character, dofusList, progressForCharacter, userId, onRefresh, onDeleted }: Props) {
   const supabase = useSupabase();
   const setActiveCharacterId = useCharacterStore((s) => s.setActiveCharacterId);
 
@@ -37,13 +37,13 @@ export function CharacterDetail({ character, dofusList, progressForCharacter, us
   async function handleRenameConfirm() {
     const trimmed = newName.trim();
     if (!trimmed || trimmed === character.name) { setRenaming(false); return; }
-    await updateCharacter(supabase, character.id, trimmed);
+    await updateCharacter(supabase, character.id, userId, trimmed);
     setRenaming(false);
     onRefresh();
   }
 
   async function handleDelete() {
-    await deleteCharacter(supabase, character.id);
+    await deleteCharacter(supabase, character.id, userId);
     onDeleted();
   }
 
