@@ -98,6 +98,8 @@ const RAW_OVERRIDES: Array<{
           "Les graines de la discorde",
           "Le champ des heros",
           "Champ borde le chateau",
+          "Cent Vingt trois fleurs",
+          "Fleuris mais rougissent",
           "La terre banquise",
           "La maire de glace",
           "Bienvenue a frigost",
