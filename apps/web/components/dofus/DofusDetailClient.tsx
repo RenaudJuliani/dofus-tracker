@@ -7,11 +7,30 @@ import {
   getQuestsForDofus,
   toggleQuestCompletion,
   bulkCompleteSection,
+  bulkUncompleteSection,
 } from "@dofus-tracker/db";
 import { DofusHeader } from "./DofusHeader";
 import { QuestSection } from "./QuestSection";
 import { ResourcePanel } from "./ResourcePanel";
-import type { Dofus, QuestWithChain, AggregatedResource, QuestSection as QuestSectionType } from "@dofus-tracker/types";
+import type { Dofus, QuestWithChain, AggregatedResource, QuestSection as QuestSectionType, Alignment, AlignmentOrder, JobVariant } from "@dofus-tracker/types";
+
+const ALIGNMENT_LABELS: Record<Alignment, string> = {
+  neutre: "Neutre",
+  bontarien: "Bontarien",
+  brakmarien: "Brakmarien",
+};
+
+const ORDER_LABELS: Record<AlignmentOrder, string> = {
+  "coeur-vaillant": "Cœur Vaillant",
+  "oeil-attentif": "Œil Attentif",
+  "esprit-salvateur": "Esprit Salvateur",
+  "coeur-saignant": "Cœur Saignant",
+  "oeil-putride": "Œil Putride",
+  "esprit-malsain": "Esprit Malsain",
+};
+
+const BONTA_ORDERS: AlignmentOrder[] = ["coeur-vaillant", "oeil-attentif", "esprit-salvateur"];
+const BRAKMAR_ORDERS: AlignmentOrder[] = ["coeur-saignant", "oeil-putride", "esprit-malsain"];
 
 interface Props {
   dofus: Dofus;
@@ -25,6 +44,23 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
 
   const [quests, setQuests] = useState<QuestWithChain[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAlignment, setSelectedAlignment] = useState<Alignment | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<AlignmentOrder | null>(null);
+  const [selectedJob, setSelectedJob] = useState<JobVariant | null>(null);
+
+  // Load persisted alignment from localStorage
+  useEffect(() => {
+    if (!activeCharacterId) return;
+    const key = `alignment_${dofus.id}_${activeCharacterId}`;
+    const orderKey = `alignment_order_${dofus.id}_${activeCharacterId}`;
+    const jobKey = `job_variant_${dofus.id}_${activeCharacterId}`;
+    const saved = localStorage.getItem(key) as Alignment | null;
+    const savedOrder = localStorage.getItem(orderKey) as AlignmentOrder | null;
+    const savedJob = localStorage.getItem(jobKey) as JobVariant | null;
+    setSelectedAlignment(saved);
+    setSelectedOrder(savedOrder);
+    setSelectedJob(savedJob);
+  }, [dofus.id, activeCharacterId]);
 
   useEffect(() => {
     if (!activeCharacterId) {
@@ -37,6 +73,33 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
       .then(setQuests)
       .finally(() => setLoading(false));
   }, [supabase, dofus.id, activeCharacterId]);
+
+  function handleAlignmentChange(alignment: Alignment | null) {
+    setSelectedAlignment(alignment);
+    setSelectedOrder(null);
+    if (!activeCharacterId) return;
+    const key = `alignment_${dofus.id}_${activeCharacterId}`;
+    const orderKey = `alignment_order_${dofus.id}_${activeCharacterId}`;
+    if (alignment) localStorage.setItem(key, alignment);
+    else localStorage.removeItem(key);
+    localStorage.removeItem(orderKey);
+  }
+
+  function handleOrderChange(order: AlignmentOrder | null) {
+    setSelectedOrder(order);
+    if (!activeCharacterId) return;
+    const orderKey = `alignment_order_${dofus.id}_${activeCharacterId}`;
+    if (order) localStorage.setItem(orderKey, order);
+    else localStorage.removeItem(orderKey);
+  }
+
+  function handleJobChange(job: JobVariant | null) {
+    setSelectedJob(job);
+    if (!activeCharacterId) return;
+    const jobKey = `job_variant_${dofus.id}_${activeCharacterId}`;
+    if (job) localStorage.setItem(jobKey, job);
+    else localStorage.removeItem(jobKey);
+  }
 
   async function handleToggle(questId: string, completed: boolean) {
     if (!activeCharacterId) return;
@@ -52,22 +115,77 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
     }
   }
 
-  async function handleBulkComplete(section: QuestSectionType) {
+  async function handleBulkComplete(section: QuestSectionType, jobVariant?: JobVariant | null) {
     if (!activeCharacterId) return;
     setQuests((prev) =>
-      prev.map((q) => (q.chain.section === section ? { ...q, is_completed: true } : q))
+      prev.map((q) => {
+        if (q.chain.section !== section) return q;
+        if (q.chain.job_variant !== null && q.chain.job_variant !== jobVariant) return q;
+        return { ...q, is_completed: true };
+      })
     );
     try {
-      await bulkCompleteSection(supabase, activeCharacterId, dofus.id, section);
+      await bulkCompleteSection(supabase, activeCharacterId, dofus.id, section, jobVariant);
     } catch {
       const fresh = await getQuestsForDofus(supabase, dofus.id, activeCharacterId);
       setQuests(fresh);
     }
   }
 
-  const prerequisites = quests.filter((q) => q.chain.section === "prerequisite");
-  const mainQuests = quests.filter((q) => q.chain.section === "main");
+  async function handleBulkUncomplete(section: QuestSectionType, jobVariant?: JobVariant | null) {
+    if (!activeCharacterId) return;
+    setQuests((prev) =>
+      prev.map((q) => {
+        if (q.chain.section !== section) return q;
+        if (q.chain.job_variant !== null && q.chain.job_variant !== jobVariant) return q;
+        return { ...q, is_completed: false };
+      })
+    );
+    try {
+      await bulkUncompleteSection(supabase, activeCharacterId, dofus.id, section, jobVariant);
+    } catch {
+      const fresh = await getQuestsForDofus(supabase, dofus.id, activeCharacterId);
+      setQuests(fresh);
+    }
+  }
+
+  // Determine if this dofus has alignment quests
+  const alignments = [...new Set(quests.map((q) => q.chain.alignment).filter(Boolean))] as Alignment[];
+  const hasAlignment = alignments.length > 0;
+  const hasNeutre = alignments.includes("neutre");
+  const hasJobVariant = quests.some((q) => q.chain.job_variant !== null);
+
+  // Filter quests by selected alignment and job variant
+  function isQuestVisible(q: QuestWithChain): boolean {
+    // Job variant filter: hide quests of the non-selected job (or all job-specific quests if none selected)
+    if (q.chain.job_variant !== null) {
+      if (!selectedJob || q.chain.job_variant !== selectedJob) return false;
+    }
+
+    const a = q.chain.alignment;
+    if (a === null) return true;
+    if (!hasAlignment) return true;
+    if (!selectedAlignment || a !== selectedAlignment) return false;
+    if (q.chain.alignment_order !== null) {
+      return q.chain.alignment_order === selectedOrder;
+    }
+    return true;
+  }
+
+  const visibleQuests = quests.filter(isQuestVisible);
+  const prerequisites = visibleQuests.filter((q) => q.chain.section === "prerequisite");
+  const mainQuests = visibleQuests.filter((q) => q.chain.section === "main");
   const completedCount = quests.filter((q) => q.is_completed).length;
+
+  // Group prerequisites by sub_section
+  const prerequisiteGroups: Array<{ title: string; quests: typeof prerequisites }> = [];
+  for (const quest of prerequisites) {
+    const title = quest.chain.sub_section ?? "Prérequis";
+    const existing = prerequisiteGroups.find((g) => g.title === title);
+    if (existing) existing.quests.push(quest);
+    else prerequisiteGroups.push({ title, quests: [quest] });
+  }
+  prerequisiteGroups.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
 
   // Group main quests by sub_section
   const mainQuestGroups: Array<{ title: string; quests: typeof mainQuests }> = [];
@@ -77,6 +195,12 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
     if (existing) existing.quests.push(quest);
     else mainQuestGroups.push({ title, quests: [quest] });
   }
+  mainQuestGroups.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
+
+  // Orders available for current alignment selection
+  const availableOrders: AlignmentOrder[] =
+    selectedAlignment === "bontarien" ? BONTA_ORDERS :
+    selectedAlignment === "brakmarien" ? BRAKMAR_ORDERS : [];
 
   // Aggregate resources from all quests
   const aggregatedResources: AggregatedResource[] = Object.values(
@@ -108,19 +232,115 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
             completedCount={completedCount}
           />
 
+          {hasAlignment && (
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-3">
+              <p className="text-sm font-medium text-gray-300">Alignement</p>
+              <div className="flex flex-wrap gap-2">
+                {hasNeutre && (
+                  <button
+                    onClick={() => handleAlignmentChange(selectedAlignment === "neutre" ? null : "neutre")}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedAlignment === "neutre"
+                        ? "bg-gray-500 text-white"
+                        : "bg-white/10 text-gray-400 hover:bg-white/20"
+                    }`}
+                  >
+                    {ALIGNMENT_LABELS.neutre}
+                  </button>
+                )}
+                <button
+                  onClick={() => handleAlignmentChange(selectedAlignment === "bontarien" ? null : "bontarien")}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    selectedAlignment === "bontarien"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white/10 text-gray-400 hover:bg-white/20"
+                  }`}
+                >
+                  {ALIGNMENT_LABELS.bontarien}
+                </button>
+                <button
+                  onClick={() => handleAlignmentChange(selectedAlignment === "brakmarien" ? null : "brakmarien")}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    selectedAlignment === "brakmarien"
+                      ? "bg-red-700 text-white"
+                      : "bg-white/10 text-gray-400 hover:bg-white/20"
+                  }`}
+                >
+                  {ALIGNMENT_LABELS.brakmarien}
+                </button>
+              </div>
+
+              {availableOrders.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs text-gray-500">Ordre (optionnel)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {availableOrders.map((order) => (
+                      <button
+                        key={order}
+                        onClick={() => handleOrderChange(selectedOrder === order ? null : order)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                          selectedOrder === order
+                            ? selectedAlignment === "bontarien"
+                              ? "bg-blue-600 text-white"
+                              : "bg-red-700 text-white"
+                            : "bg-white/10 text-gray-400 hover:bg-white/20"
+                        }`}
+                      >
+                        {ORDER_LABELS[order]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {hasJobVariant && (
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-3">
+              <p className="text-sm font-medium text-gray-300">Métier</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleJobChange(selectedJob === "paysan" ? null : "paysan")}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    selectedJob === "paysan"
+                      ? "bg-yellow-600 text-white"
+                      : "bg-white/10 text-gray-400 hover:bg-white/20"
+                  }`}
+                >
+                  Paysan
+                </button>
+                <button
+                  onClick={() => handleJobChange(selectedJob === "alchimiste" ? null : "alchimiste")}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    selectedJob === "alchimiste"
+                      ? "bg-green-600 text-white"
+                      : "bg-white/10 text-gray-400 hover:bg-white/20"
+                  }`}
+                >
+                  Alchimiste
+                </button>
+              </div>
+              {!selectedJob && (
+                <p className="text-xs text-gray-500">Sélectionne ton métier pour voir les quêtes correspondantes.</p>
+              )}
+            </div>
+          )}
+
           {loading ? (
             <p className="text-gray-400 text-sm animate-pulse">Chargement des quêtes…</p>
           ) : (
             <>
-              {prerequisites.length > 0 && (
+              {prerequisiteGroups.map(({ title, quests: groupQuests }) => (
                 <QuestSection
-                  title="Prérequis"
-                  quests={prerequisites}
+                  key={title}
+                  title={title}
+                  quests={groupQuests}
                   dofusColor={dofus.color}
                   onToggle={handleToggle}
-                  onBulkComplete={() => handleBulkComplete("prerequisite")}
+                  onBulkComplete={() => handleBulkComplete("prerequisite", selectedJob)}
+                  onBulkUncomplete={() => handleBulkUncomplete("prerequisite", selectedJob)}
                 />
-              )}
+              ))}
               {mainQuestGroups.map(({ title, quests: groupQuests }) => (
                 <QuestSection
                   key={title}
@@ -128,7 +348,8 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
                   quests={groupQuests}
                   dofusColor={dofus.color}
                   onToggle={handleToggle}
-                  onBulkComplete={() => handleBulkComplete("main")}
+                  onBulkComplete={() => handleBulkComplete("main", selectedJob)}
+                  onBulkUncomplete={() => handleBulkUncomplete("main", selectedJob)}
                 />
               ))}
             </>
