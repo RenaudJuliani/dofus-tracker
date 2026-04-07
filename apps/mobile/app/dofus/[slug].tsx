@@ -68,7 +68,7 @@ export default function DofusDetailScreen() {
   const [selectedAlignment, setSelectedAlignment] = useState<Alignment | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<AlignmentOrder | null>(null);
 
-  const { handleBulkComplete } = useQuestToggle({
+  const { handleBulkComplete, handleBulkUncomplete } = useQuestToggle({
     supabase,
     characterId: activeCharacterId,
     dofusId: dofus?.id ?? "",
@@ -322,6 +322,7 @@ export default function DofusDetailScreen() {
             dofusColor={dofus.color}
             onToggle={offlineHandleToggle}
             onBulkComplete={() => handleBulkComplete("prerequisite" as QuestSectionType)}
+            onBulkUncomplete={() => handleBulkUncomplete("prerequisite" as QuestSectionType)}
           />
         ))}
         {mainQuestGroups.map(({ title, quests: groupQuests }) => (
@@ -332,6 +333,7 @@ export default function DofusDetailScreen() {
             dofusColor={dofus.color}
             onToggle={offlineHandleToggle}
             onBulkComplete={() => handleBulkComplete("main" as QuestSectionType)}
+            onBulkUncomplete={() => handleBulkUncomplete("main" as QuestSectionType)}
           />
         ))}
         {aggregatedResources.length > 0 && (

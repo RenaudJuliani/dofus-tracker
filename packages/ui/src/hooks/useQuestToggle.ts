@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   toggleQuestCompletion,
   bulkCompleteSection,
+  bulkUncompleteSection,
   getQuestsForDofus,
 } from "@dofus-tracker/db";
 import type { QuestWithChain, QuestSection } from "@dofus-tracker/types";
@@ -50,5 +51,23 @@ export function useQuestToggle({ supabase, characterId, dofusId, setQuests }: Pa
     [supabase, characterId, dofusId, setQuests]
   );
 
-  return { handleToggle, handleBulkComplete };
+  const handleBulkUncomplete = useCallback(
+    async (section: QuestSection) => {
+      if (!characterId) return;
+      setQuests((prev) =>
+        prev.map((q) =>
+          q.chain.section === section ? { ...q, is_completed: false } : q
+        )
+      );
+      try {
+        await bulkUncompleteSection(supabase, characterId, dofusId, section);
+      } catch {
+        const fresh = await getQuestsForDofus(supabase, dofusId, characterId);
+        setQuests(fresh);
+      }
+    },
+    [supabase, characterId, dofusId, setQuests]
+  );
+
+  return { handleToggle, handleBulkComplete, handleBulkUncomplete };
 }

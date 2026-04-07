@@ -184,13 +184,15 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
     if (existing) existing.quests.push(quest);
     else allGroups.push({ title, section: quest.chain.section as QuestSectionType, quests: [quest] });
   }
-  // Prérequis* groups always come before others, then sort each group alphabetically/numerically
+  // Prérequis* groups always come before others, then sort by min order_index to preserve game order
   allGroups.sort((a, b) => {
     const aIsPrereq = a.title.startsWith("Prérequis");
     const bIsPrereq = b.title.startsWith("Prérequis");
     if (aIsPrereq && !bIsPrereq) return -1;
     if (!aIsPrereq && bIsPrereq) return 1;
-    return a.title.localeCompare(b.title, undefined, { numeric: true });
+    const aMin = Math.min(...a.quests.map((q) => q.chain.order_index));
+    const bMin = Math.min(...b.quests.map((q) => q.chain.order_index));
+    return aMin - bMin;
   });
 
   // Orders available for current alignment selection
