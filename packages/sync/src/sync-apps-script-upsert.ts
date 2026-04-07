@@ -224,6 +224,12 @@ export async function syncAllFromAppsScript(
           alchimisteQuestId = newQuest.id;
         }
 
+        // If alchimiste quest was already processed in the main loop (it's in the Sheet),
+        // its chain already has the correct sub_section — only add it to the protect list.
+        if (alchimisteQuestId && upsertedQuestIds.includes(alchimisteQuestId)) {
+          continue;
+        }
+
         // Upsert alchimiste chain at the same position as paysan
         const { error: alchiChainError } = await client
           .from("dofus_quest_chains")
