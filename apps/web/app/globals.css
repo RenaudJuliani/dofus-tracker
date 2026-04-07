@@ -6,8 +6,8 @@
 :root {
   --color-accent: #4ade80;
   --color-accent-dark: #22c55e;
-  --glass-bg: rgba(8, 16, 10, 0.64);
-  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-bg: rgba(52, 58, 72, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.13);
 }
 
 /* ─── Base ──────────────────────────────────────────────────── */
@@ -16,10 +16,12 @@ html {
 }
 
 body {
-  @apply bg-gray-950 text-white font-sans antialiased;
+  @apply text-white font-sans antialiased;
+  background-color: #22252f;
   background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(34, 197, 94, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
+    radial-gradient(ellipse at 75% 5%, rgba(74, 222, 128, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 15% 60%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 85% 90%, rgba(167, 243, 208, 0.04) 0%, transparent 35%);
   min-height: 100vh;
 }
 

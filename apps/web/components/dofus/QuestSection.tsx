@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { QuestWithChain } from "@dofus-tracker/types";
 import { QuestItem } from "./QuestItem";
 
@@ -9,6 +10,7 @@ interface Props {
   dofusColor: string;
   onToggle: (questId: string, completed: boolean) => void;
   onBulkComplete: () => void;
+  onBulkUncomplete: () => void;
 }
 
 // Groups consecutive quests with the same group_id into arrays
@@ -33,31 +35,37 @@ function groupQuests(quests: QuestWithChain[]): Array<QuestWithChain | QuestWith
   return result;
 }
 
-export function QuestSection({ title, quests, dofusColor, onToggle, onBulkComplete }: Props) {
+export function QuestSection({ title, quests, dofusColor, onToggle, onBulkComplete, onBulkUncomplete }: Props) {
+  const [expanded, setExpanded] = useState(true);
   const completedCount = quests.filter((q) => q.is_completed).length;
+  const allCompleted = completedCount === quests.length;
   const grouped = groupQuests(quests);
 
   return (
     <section className="glass rounded-2xl overflow-hidden">
       {/* Section header */}
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5">
-        <div className="flex items-center gap-3">
+        <button
+          className="flex items-center gap-3 flex-1 text-left"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          <span className="text-gray-400 text-xs w-3 shrink-0">{expanded ? "▼" : "▶"}</span>
           <h2 className="font-bold text-white">{title}</h2>
           <span className="text-sm text-gray-400">
             {completedCount}/{quests.length}
           </span>
-        </div>
+        </button>
         <button
-          onClick={onBulkComplete}
+          onClick={allCompleted ? onBulkUncomplete : onBulkComplete}
           className="text-xs btn-secondary px-3 py-1"
-          disabled={completedCount === quests.length}
+          disabled={quests.length === 0}
         >
-          Tout cocher
+          {allCompleted ? "Tout décocher" : "Tout cocher"}
         </button>
       </div>
 
       {/* Quest list */}
-      <div className="divide-y divide-white/[0.04] p-2 space-y-0.5">
+      {expanded && <div className="divide-y divide-white/[0.04] p-2 space-y-0.5">
         {grouped.map((item, idx) => {
           if (Array.isArray(item)) {
             // Group box
@@ -90,7 +98,7 @@ export function QuestSection({ title, quests, dofusColor, onToggle, onBulkComple
             />
           );
         })}
-      </div>
+      </div>}
     </section>
   );
 }
