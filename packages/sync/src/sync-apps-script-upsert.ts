@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { extractAllQuests, type AppsScriptData } from "./apps-script-client.js";
 import { getSubSection } from "./sub-section-overrides.js";
 import { getAlignmentOverride, getAlignmentOverrideSlugsForDofus } from "./alignment-overrides.js";
-import { getJobVariantOverride, getJobVariantPairs, getJobVariantOverrideSlugsForDofus } from "./job-variant-overrides.js";
+import { getJobVariantOverride, getJobVariantPairs } from "./job-variant-overrides.js";
 import { getUrlOverride } from "./url-overrides.js";
 
 export interface FullSyncReport {
@@ -164,18 +164,6 @@ export async function syncAllFromAppsScript(
     // 3b. Ensure alchimiste chains exist, inheriting order_index from paysan counterpart
     const jobPairs = getJobVariantPairs(dofusSlug);
     if (jobPairs.length > 0) {
-      // Protect all job variant quest IDs from stale cleanup
-      const jobVariantSlugs = getJobVariantOverrideSlugsForDofus(dofusSlug);
-      if (jobVariantSlugs.length > 0) {
-        const { data: jvQuests } = await client
-          .from("quests")
-          .select("id, slug")
-          .in("slug", jobVariantSlugs);
-        for (const jvq of jvQuests ?? []) {
-          if (!upsertedQuestIds.includes(jvq.id)) upsertedQuestIds.push(jvq.id);
-        }
-      }
-
       for (const pair of jobPairs) {
         // Find paysan chain to inherit its position
         const { data: paysanQuestRow } = await client
@@ -222,12 +210,6 @@ export async function syncAllFromAppsScript(
             continue;
           }
           alchimisteQuestId = newQuest.id;
-        }
-
-        // If alchimiste quest was already processed in the main loop (it's in the Sheet),
-        // its chain already has the correct sub_section — only add it to the protect list.
-        if (alchimisteQuestId && upsertedQuestIds.includes(alchimisteQuestId)) {
-          continue;
         }
 
         // Upsert alchimiste chain at the same position as paysan
