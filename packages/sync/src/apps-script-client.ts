@@ -68,14 +68,21 @@ export function extractAllQuests(data: AppsScriptData): QuestChainEntry[] {
       const mappedSection: QuestSection = SECTION_MAP[sectionKey] ?? "main";
 
       for (const subSection of section.sous_sections) {
+        // Sub-section titre may override the parent section (e.g. "Prérequis" as a sous-section of "Les quêtes")
+        const subSectionKey = subSection.titre?.trim() ?? "";
+        const effectiveSection: QuestSection = SECTION_MAP[subSectionKey] ?? mappedSection;
+
         for (const quest of subSection.quetes) {
+          const name = quest.nom?.trim();
+          if (!name || name === "toIgnore") continue;
+
           entries.push({
             dofusName,
             dofusSlug,
-            section: mappedSection,
+            section: effectiveSection,
             subSection: null, // overridden by sub-section-overrides.ts at sync time
-            questName: quest.nom,
-            questSlug: nameToSlug(quest.nom),
+            questName: name,
+            questSlug: nameToSlug(name),
             orderIndex: orderIndex++,
             resources: quest.ressources.map((r) => ({
               name: r.nom,

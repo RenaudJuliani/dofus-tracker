@@ -12,6 +12,14 @@ interface Props {
 
 export function ResourcePanel({ resources, dofusColor }: Props) {
   const [multiplier, setMultiplier] = useState(1);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  function copyToClipboard(name: string) {
+    navigator.clipboard.writeText(name).then(() => {
+      setCopied(name);
+      setTimeout(() => setCopied(null), 1500);
+    });
+  }
 
   const formatNumber = (n: number) =>
     n.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
@@ -52,12 +60,21 @@ export function ResourcePanel({ resources, dofusColor }: Props) {
 
       <div className="divide-y divide-white/[0.04] max-h-[60vh] overflow-y-auto">
         {items.map((resource) => (
-          <div key={resource.name} className="flex items-center gap-3 px-5 py-2.5">
-            <span className="text-sm text-white flex-1 min-w-0 truncate">{resource.name}</span>
+          <button
+            key={resource.name}
+            onClick={() => copyToClipboard(resource.name)}
+            className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-white/5 transition-colors text-left group"
+            title={`Copier "${resource.name}"`}
+          >
+            <span className="text-sm text-white flex-1 min-w-0 truncate">
+              {copied === resource.name ? (
+                <span className="text-dofus-green text-xs font-semibold">✓ Copié !</span>
+              ) : resource.name}
+            </span>
             <span className="text-sm font-bold shrink-0" style={{ color: dofusColor }}>
               {formatNumber(resource.quantity * multiplier)}
             </span>
-          </div>
+          </button>
         ))}
       </div>
 

@@ -11,6 +11,18 @@ export type QuestType =
 
 export type QuestSection = "prerequisite" | "main";
 
+export type Alignment = "neutre" | "bontarien" | "brakmarien";
+
+export type AlignmentOrder =
+  | "coeur-vaillant"
+  | "oeil-attentif"
+  | "esprit-salvateur"
+  | "coeur-saignant"
+  | "oeil-putride"
+  | "esprit-malsain";
+
+export type JobVariant = "alchimiste" | "paysan";
+
 export interface Dofus {
   id: string;
   name: string;
@@ -43,6 +55,9 @@ export interface DofusQuestChain {
   quest_types: QuestType[];
   combat_count: number | null;
   is_avoidable: boolean;
+  alignment: Alignment | null;
+  alignment_order: AlignmentOrder | null;
+  job_variant: JobVariant | null;
 }
 
 /** Ressource requise pour une quête spécifique */

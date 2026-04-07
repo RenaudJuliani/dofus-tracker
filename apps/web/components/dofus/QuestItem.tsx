@@ -22,7 +22,15 @@ interface Props {
 export function QuestItem({ quest, dofusColor, onToggle }: Props) {
   const { chain, is_completed, shared_dofus_ids, resources } = quest;
   const [resourcesExpanded, setResourcesExpanded] = useState(false);
+  const [copiedResource, setCopiedResource] = useState<string | null>(null);
   const hasResources = resources.length > 0;
+
+  function copyResource(name: string) {
+    navigator.clipboard.writeText(name).then(() => {
+      setCopiedResource(name);
+      setTimeout(() => setCopiedResource(null), 1500);
+    });
+  }
 
   return (
     <div
@@ -116,14 +124,23 @@ export function QuestItem({ quest, dofusColor, onToggle }: Props) {
 
       {/* Expandable resources */}
       {resourcesExpanded && (
-        <div className="border-t border-white/5 px-4 py-2 space-y-1">
+        <div className="border-t border-white/5 px-4 py-2 space-y-0.5">
           {resources.map((r) => (
-            <div key={r.id} className="flex justify-between items-center">
-              <span className="text-xs text-gray-400">{r.name}</span>
+            <button
+              key={r.id}
+              onClick={() => copyResource(r.name)}
+              className="w-full flex justify-between items-center py-1 px-2 rounded hover:bg-white/5 transition-colors text-left group"
+              title={`Copier "${r.name}"`}
+            >
+              <span className="text-xs text-gray-400 group-hover:text-white transition-colors">
+                {copiedResource === r.name ? (
+                  <span className="text-dofus-green font-semibold">✓ Copié !</span>
+                ) : r.name}
+              </span>
               <span className="text-xs font-semibold" style={{ color: dofusColor }}>
                 ×{r.quantity}
               </span>
-            </div>
+            </button>
           ))}
         </div>
       )}

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "../client.js";
-import type { QuestWithChain, QuestSection, QuestResource, AggregatedResource } from "@dofus-tracker/types";
+import type { QuestWithChain, QuestSection, QuestResource, AggregatedResource, Alignment, AlignmentOrder, JobVariant } from "@dofus-tracker/types";
 
 export async function getQuestsForDofus(
   client: SupabaseClient,
@@ -71,6 +71,9 @@ export async function getQuestsForDofus(
         quest_types: c.quest_types,
         combat_count: c.combat_count,
         is_avoidable: c.is_avoidable,
+        alignment: (c.alignment ?? null) as Alignment | null,
+        alignment_order: (c.alignment_order ?? null) as AlignmentOrder | null,
+        job_variant: (c.job_variant ?? null) as JobVariant | null,
       },
       is_completed: completedSet.has(c.quest_id),
       shared_dofus_ids: sharedMap.get(c.quest_id) ?? [],
@@ -103,13 +106,20 @@ export async function bulkCompleteSection(
   client: SupabaseClient,
   characterId: string,
   dofusId: string,
-  section: QuestSection
+  section: QuestSection,
+  jobVariant?: JobVariant | null
 ): Promise<void> {
-  const { data: chains, error: chainsError } = await client
+  let chainsQuery = client
     .from("dofus_quest_chains")
     .select("quest_id")
     .eq("dofus_id", dofusId)
     .eq("section", section);
+
+  if (jobVariant) {
+    chainsQuery = chainsQuery.or(`job_variant.is.null,job_variant.eq.${jobVariant}`);
+  }
+
+  const { data: chains, error: chainsError } = await chainsQuery;
   if (chainsError) throw chainsError;
 
   const rows = (chains ?? []).map((c) => ({
@@ -121,6 +131,37 @@ export async function bulkCompleteSection(
   const { error } = await client
     .from("user_quest_completions")
     .upsert(rows, { onConflict: "character_id,quest_id", ignoreDuplicates: true });
+  if (error) throw error;
+}
+
+export async function bulkUncompleteSection(
+  client: SupabaseClient,
+  characterId: string,
+  dofusId: string,
+  section: QuestSection,
+  jobVariant?: JobVariant | null
+): Promise<void> {
+  let chainsQuery = client
+    .from("dofus_quest_chains")
+    .select("quest_id")
+    .eq("dofus_id", dofusId)
+    .eq("section", section);
+
+  if (jobVariant) {
+    chainsQuery = chainsQuery.or(`job_variant.is.null,job_variant.eq.${jobVariant}`);
+  }
+
+  const { data: chains, error: chainsError } = await chainsQuery;
+  if (chainsError) throw chainsError;
+
+  const questIds = (chains ?? []).map((c) => c.quest_id);
+  if (questIds.length === 0) return;
+
+  const { error } = await client
+    .from("user_quest_completions")
+    .delete()
+    .eq("character_id", characterId)
+    .in("quest_id", questIds);
   if (error) throw error;
 }
 

@@ -43,9 +43,15 @@ export function AuthForm() {
 
   return (
     <div className="glass p-8 w-full max-w-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-white mb-6">
+      <div className="text-center mb-8">
+        <h1 className="flex flex-col items-center gap-0.5">
+          <span className="text-5xl font-black text-dofus-green tracking-[0.15em] uppercase">Dofus</span>
+          <span className="text-xl font-black text-white tracking-[0.5em] uppercase">Tracker</span>
+        </h1>
+      </div>
+      <h2 className="text-2xl font-bold text-white mb-6">
         {mode === "login" ? "Connexion" : "Créer un compte"}
-      </h1>
+      </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <input

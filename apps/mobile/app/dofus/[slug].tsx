@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { ScrollView, View, Text, ActivityIndicator } from "react-native";
+import { ScrollView, View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { BottomSheetHandle } from "@/components/shared/CustomBottomSheet";
 import {
   getDofusList,
@@ -24,7 +25,28 @@ import type {
   QuestWithChain,
   AggregatedResource,
   QuestSection as QuestSectionType,
+  Alignment,
+  AlignmentOrder,
+  JobVariant,
 } from "@dofus-tracker/types";
+
+const ALIGNMENT_LABELS: Record<Alignment, string> = {
+  neutre: "Neutre",
+  bontarien: "Bontarien",
+  brakmarien: "Brakmarien",
+};
+
+const ORDER_LABELS: Record<AlignmentOrder, string> = {
+  "coeur-vaillant": "Cœur Vaillant",
+  "oeil-attentif": "Œil Attentif",
+  "esprit-salvateur": "Esprit Salvateur",
+  "coeur-saignant": "Cœur Saignant",
+  "oeil-putride": "Œil Putride",
+  "esprit-malsain": "Esprit Malsain",
+};
+
+const BONTA_ORDERS: AlignmentOrder[] = ["coeur-vaillant", "oeil-attentif", "esprit-salvateur"];
+const BRAKMAR_ORDERS: AlignmentOrder[] = ["coeur-saignant", "oeil-putride", "esprit-malsain"];
 
 function isNetworkError(err: unknown): boolean {
   return (
@@ -44,13 +66,60 @@ export default function DofusDetailScreen() {
   const [allDofus, setAllDofus] = useState<Dofus[]>([]);
   const [quests, setQuests] = useState<QuestWithChain[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAlignment, setSelectedAlignment] = useState<Alignment | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<AlignmentOrder | null>(null);
+  const [selectedJob, setSelectedJob] = useState<JobVariant | null>(null);
 
-  const { handleBulkComplete } = useQuestToggle({
+  const { handleBulkComplete, handleBulkUncomplete } = useQuestToggle({
     supabase,
     characterId: activeCharacterId,
     dofusId: dofus?.id ?? "",
     setQuests,
   });
+
+  // Load persisted alignment + job variant from AsyncStorage
+  useEffect(() => {
+    if (!activeCharacterId || !dofus) return;
+    const key = `alignment_${dofus.id}_${activeCharacterId}`;
+    const orderKey = `alignment_order_${dofus.id}_${activeCharacterId}`;
+    const jobKey = `job_variant_${dofus.id}_${activeCharacterId}`;
+    Promise.all([
+      AsyncStorage.getItem(key),
+      AsyncStorage.getItem(orderKey),
+      AsyncStorage.getItem(jobKey),
+    ]).then(([saved, savedOrder, savedJob]) => {
+      setSelectedAlignment((saved as Alignment) ?? null);
+      setSelectedOrder((savedOrder as AlignmentOrder) ?? null);
+      setSelectedJob((savedJob as JobVariant) ?? null);
+    });
+  }, [dofus?.id, activeCharacterId]);
+
+  async function handleAlignmentChange(alignment: Alignment | null) {
+    if (!activeCharacterId || !dofus) return;
+    setSelectedAlignment(alignment);
+    setSelectedOrder(null);
+    const key = `alignment_${dofus.id}_${activeCharacterId}`;
+    const orderKey = `alignment_order_${dofus.id}_${activeCharacterId}`;
+    if (alignment) await AsyncStorage.setItem(key, alignment);
+    else await AsyncStorage.removeItem(key);
+    await AsyncStorage.removeItem(orderKey);
+  }
+
+  async function handleOrderChange(order: AlignmentOrder | null) {
+    if (!activeCharacterId || !dofus) return;
+    setSelectedOrder(order);
+    const orderKey = `alignment_order_${dofus.id}_${activeCharacterId}`;
+    if (order) await AsyncStorage.setItem(orderKey, order);
+    else await AsyncStorage.removeItem(orderKey);
+  }
+
+  async function handleJobChange(job: JobVariant | null) {
+    if (!activeCharacterId || !dofus) return;
+    setSelectedJob(job);
+    const jobKey = `job_variant_${dofus.id}_${activeCharacterId}`;
+    if (job) await AsyncStorage.setItem(jobKey, job);
+    else await AsyncStorage.removeItem(jobKey);
+  }
 
   // Wrapper qui intercepte les erreurs réseau avant le rollback de useQuestToggle
   const offlineHandleToggle = useCallback(
@@ -124,8 +193,31 @@ export default function DofusDetailScreen() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const prerequisites = quests.filter((q) => q.chain.section === "prerequisite");
-  const mainQuests = quests.filter((q) => q.chain.section === "main");
+  // Alignment + job variant detection
+  const alignments = [...new Set(quests.map((q) => q.chain.alignment).filter(Boolean))] as Alignment[];
+  const hasAlignment = alignments.length > 0;
+  const hasNeutre = alignments.includes("neutre");
+  const hasJobVariant = quests.some((q) => q.chain.job_variant !== null);
+
+  function isQuestVisible(q: QuestWithChain): boolean {
+    // Job variant filter: hide job-specific quests if wrong/no job selected
+    if (q.chain.job_variant !== null) {
+      if (!selectedJob || q.chain.job_variant !== selectedJob) return false;
+    }
+    // Alignment filter
+    if (!hasAlignment || !selectedAlignment) return true;
+    const a = q.chain.alignment;
+    if (a === null) return true;
+    if (a !== selectedAlignment) return false;
+    if (q.chain.alignment_order !== null) {
+      return q.chain.alignment_order === selectedOrder;
+    }
+    return true;
+  }
+
+  const visibleQuests = quests.filter(isQuestVisible);
+  const prerequisites = visibleQuests.filter((q) => q.chain.section === "prerequisite");
+  const mainQuests = visibleQuests.filter((q) => q.chain.section === "main");
   const completedCount = quests.filter((q) => q.is_completed).length;
 
   const aggregatedResources: AggregatedResource[] = Object.values(
@@ -145,6 +237,15 @@ export default function DofusDetailScreen() {
     )
   );
 
+  // Group prerequisites by sub_section
+  const prerequisiteGroups: Array<{ title: string; quests: typeof prerequisites }> = [];
+  for (const quest of prerequisites) {
+    const title = quest.chain.sub_section ?? "Prérequis";
+    const existing = prerequisiteGroups.find((g) => g.title === title);
+    if (existing) existing.quests.push(quest);
+    else prerequisiteGroups.push({ title, quests: [quest] });
+  }
+
   const mainQuestGroups: Array<{ title: string; quests: typeof mainQuests }> = [];
   for (const quest of mainQuests) {
     const title = quest.chain.sub_section ?? "Les quêtes";
@@ -152,6 +253,10 @@ export default function DofusDetailScreen() {
     if (existing) existing.quests.push(quest);
     else mainQuestGroups.push({ title, quests: [quest] });
   }
+
+  const availableOrders: AlignmentOrder[] =
+    selectedAlignment === "bontarien" ? BONTA_ORDERS :
+    selectedAlignment === "brakmarien" ? BRAKMAR_ORDERS : [];
 
   if (loading || !dofus) {
     return (
@@ -171,15 +276,101 @@ export default function DofusDetailScreen() {
           quests={quests}
           completedCount={completedCount}
         />
-        {prerequisites.length > 0 && (
+
+        {hasAlignment && (
+          <View className="rounded-xl border border-white/10 bg-white/5 p-4 mb-4 gap-3">
+            <Text className="text-sm font-medium text-gray-300">Alignement</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {hasNeutre && (
+                <TouchableOpacity
+                  onPress={() => handleAlignmentChange(selectedAlignment === "neutre" ? null : "neutre")}
+                  className={`px-3 py-1.5 rounded-full ${selectedAlignment === "neutre" ? "bg-gray-500" : "bg-white/10"}`}
+                >
+                  <Text className={`text-sm font-medium ${selectedAlignment === "neutre" ? "text-white" : "text-gray-400"}`}>
+                    {ALIGNMENT_LABELS.neutre}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                onPress={() => handleAlignmentChange(selectedAlignment === "bontarien" ? null : "bontarien")}
+                className={`px-3 py-1.5 rounded-full ${selectedAlignment === "bontarien" ? "bg-blue-600" : "bg-white/10"}`}
+              >
+                <Text className={`text-sm font-medium ${selectedAlignment === "bontarien" ? "text-white" : "text-gray-400"}`}>
+                  {ALIGNMENT_LABELS.bontarien}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleAlignmentChange(selectedAlignment === "brakmarien" ? null : "brakmarien")}
+                className={`px-3 py-1.5 rounded-full ${selectedAlignment === "brakmarien" ? "bg-red-700" : "bg-white/10"}`}
+              >
+                <Text className={`text-sm font-medium ${selectedAlignment === "brakmarien" ? "text-white" : "text-gray-400"}`}>
+                  {ALIGNMENT_LABELS.brakmarien}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {availableOrders.length > 0 && (
+              <View className="gap-1.5">
+                <Text className="text-xs text-gray-500">Ordre (optionnel)</Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {availableOrders.map((order) => (
+                    <TouchableOpacity
+                      key={order}
+                      onPress={() => handleOrderChange(selectedOrder === order ? null : order)}
+                      className={`px-3 py-1 rounded-full ${
+                        selectedOrder === order
+                          ? selectedAlignment === "bontarien" ? "bg-blue-600" : "bg-red-700"
+                          : "bg-white/10"
+                      }`}
+                    >
+                      <Text className={`text-xs font-medium ${selectedOrder === order ? "text-white" : "text-gray-400"}`}>
+                        {ORDER_LABELS[order]}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
+        {hasJobVariant && (
+          <View className="rounded-xl border border-white/10 bg-white/5 p-4 mb-4 gap-3">
+            <Text className="text-sm font-medium text-gray-300">Métier</Text>
+            <View className="flex-row flex-wrap gap-2">
+              <TouchableOpacity
+                onPress={() => handleJobChange(selectedJob === "paysan" ? null : "paysan")}
+                className={`px-3 py-1.5 rounded-full ${selectedJob === "paysan" ? "bg-yellow-600" : "bg-white/10"}`}
+              >
+                <Text className={`text-sm font-medium ${selectedJob === "paysan" ? "text-white" : "text-gray-400"}`}>
+                  Paysan
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleJobChange(selectedJob === "alchimiste" ? null : "alchimiste")}
+                className={`px-3 py-1.5 rounded-full ${selectedJob === "alchimiste" ? "bg-green-600" : "bg-white/10"}`}
+              >
+                <Text className={`text-sm font-medium ${selectedJob === "alchimiste" ? "text-white" : "text-gray-400"}`}>
+                  Alchimiste
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {!selectedJob && (
+              <Text className="text-xs text-gray-500">Sélectionne ton métier pour voir les quêtes correspondantes.</Text>
+            )}
+          </View>
+        )}
+
+        {prerequisiteGroups.map(({ title, quests: groupQuests }) => (
           <QuestSection
-            title="Prérequis"
-            quests={prerequisites}
+            key={title}
+            title={title}
+            quests={groupQuests}
             dofusColor={dofus.color}
             onToggle={offlineHandleToggle}
-            onBulkComplete={() => handleBulkComplete("prerequisite" as QuestSectionType)}
+            onBulkComplete={() => handleBulkComplete("prerequisite" as QuestSectionType, selectedJob)}
+            onBulkUncomplete={() => handleBulkUncomplete("prerequisite" as QuestSectionType, selectedJob)}
           />
-        )}
+        ))}
         {mainQuestGroups.map(({ title, quests: groupQuests }) => (
           <QuestSection
             key={title}
@@ -187,7 +378,8 @@ export default function DofusDetailScreen() {
             quests={groupQuests}
             dofusColor={dofus.color}
             onToggle={offlineHandleToggle}
-            onBulkComplete={() => handleBulkComplete("main" as QuestSectionType)}
+            onBulkComplete={() => handleBulkComplete("main" as QuestSectionType, selectedJob)}
+            onBulkUncomplete={() => handleBulkUncomplete("main" as QuestSectionType, selectedJob)}
           />
         ))}
         {aggregatedResources.length > 0 && (
