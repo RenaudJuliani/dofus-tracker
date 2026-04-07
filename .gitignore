@@ -1,12 +1,35 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Build artifacts
+*.tsbuildinfo
+
+# Claude Code / Superpowers cache
+.superpowers/
+
+# Turbo cache
+.turbo/
+
+# Dependencies
 node_modules/
+
+# Expo
+.expo/
+
+# Git worktrees (local dev isolation)
+.worktrees/
+
+# Build output
 dist/
-packages/*/dist/
+.next/
+
+# Sensitive credentials
+service-account.json
+*.pem
+*.p12
+
+# Environment variables
 .env
 .env.local
-.turbo/
-.next/
-.expo/
-service-account.json
-supabase/.branches/
-supabase/.temp/
-.worktrees/
+.env*.local
