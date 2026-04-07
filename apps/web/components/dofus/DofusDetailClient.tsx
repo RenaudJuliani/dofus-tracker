@@ -173,29 +173,25 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
   }
 
   const visibleQuests = quests.filter(isQuestVisible);
-  const prerequisites = visibleQuests.filter((q) => q.chain.section === "prerequisite");
-  const mainQuests = visibleQuests.filter((q) => q.chain.section === "main");
   const completedCount = quests.filter((q) => q.is_completed).length;
 
-  // Group prerequisites by sub_section
-  const prerequisiteGroups: Array<{ title: string; quests: typeof prerequisites }> = [];
-  for (const quest of prerequisites) {
-    const title = quest.chain.sub_section ?? "Prérequis";
-    const existing = prerequisiteGroups.find((g) => g.title === title);
+  // Group all quests by sub_section, keeping section info for bulk actions
+  const allGroups: Array<{ title: string; section: QuestSectionType; quests: typeof visibleQuests }> = [];
+  for (const quest of visibleQuests) {
+    const isPrereq = quest.chain.section === "prerequisite" || quest.chain.sub_section?.startsWith("Prérequis");
+    const title = quest.chain.sub_section ?? (isPrereq ? "Prérequis" : "Les quêtes");
+    const existing = allGroups.find((g) => g.title === title);
     if (existing) existing.quests.push(quest);
-    else prerequisiteGroups.push({ title, quests: [quest] });
+    else allGroups.push({ title, section: quest.chain.section as QuestSectionType, quests: [quest] });
   }
-  prerequisiteGroups.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
-
-  // Group main quests by sub_section
-  const mainQuestGroups: Array<{ title: string; quests: typeof mainQuests }> = [];
-  for (const quest of mainQuests) {
-    const title = quest.chain.sub_section ?? "Les quêtes";
-    const existing = mainQuestGroups.find((g) => g.title === title);
-    if (existing) existing.quests.push(quest);
-    else mainQuestGroups.push({ title, quests: [quest] });
-  }
-  mainQuestGroups.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
+  // Prérequis* groups always come before others, then sort each group alphabetically/numerically
+  allGroups.sort((a, b) => {
+    const aIsPrereq = a.title.startsWith("Prérequis");
+    const bIsPrereq = b.title.startsWith("Prérequis");
+    if (aIsPrereq && !bIsPrereq) return -1;
+    if (!aIsPrereq && bIsPrereq) return 1;
+    return a.title.localeCompare(b.title, undefined, { numeric: true });
+  });
 
   // Orders available for current alignment selection
   const availableOrders: AlignmentOrder[] =
@@ -330,26 +326,15 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
             <p className="text-gray-400 text-sm animate-pulse">Chargement des quêtes…</p>
           ) : (
             <>
-              {prerequisiteGroups.map(({ title, quests: groupQuests }) => (
+              {allGroups.map(({ title, section, quests: groupQuests }) => (
                 <QuestSection
                   key={title}
                   title={title}
                   quests={groupQuests}
                   dofusColor={dofus.color}
                   onToggle={handleToggle}
-                  onBulkComplete={() => handleBulkComplete("prerequisite", selectedJob)}
-                  onBulkUncomplete={() => handleBulkUncomplete("prerequisite", selectedJob)}
-                />
-              ))}
-              {mainQuestGroups.map(({ title, quests: groupQuests }) => (
-                <QuestSection
-                  key={title}
-                  title={title}
-                  quests={groupQuests}
-                  dofusColor={dofus.color}
-                  onToggle={handleToggle}
-                  onBulkComplete={() => handleBulkComplete("main", selectedJob)}
-                  onBulkUncomplete={() => handleBulkUncomplete("main", selectedJob)}
+                  onBulkComplete={() => handleBulkComplete(section, selectedJob)}
+                  onBulkUncomplete={() => handleBulkUncomplete(section, selectedJob)}
                 />
               ))}
             </>
