@@ -27,6 +27,7 @@ import type {
   QuestSection as QuestSectionType,
   Alignment,
   AlignmentOrder,
+  JobVariant,
 } from "@dofus-tracker/types";
 
 const ALIGNMENT_LABELS: Record<Alignment, string> = {
@@ -67,6 +68,7 @@ export default function DofusDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedAlignment, setSelectedAlignment] = useState<Alignment | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<AlignmentOrder | null>(null);
+  const [selectedJob, setSelectedJob] = useState<JobVariant | null>(null);
 
   const { handleBulkComplete, handleBulkUncomplete } = useQuestToggle({
     supabase,
@@ -75,17 +77,21 @@ export default function DofusDetailScreen() {
     setQuests,
   });
 
-  // Load persisted alignment from AsyncStorage
+  // Load persisted alignment + job variant from AsyncStorage
   useEffect(() => {
     if (!activeCharacterId || !dofus) return;
     const key = `alignment_${dofus.id}_${activeCharacterId}`;
     const orderKey = `alignment_order_${dofus.id}_${activeCharacterId}`;
-    Promise.all([AsyncStorage.getItem(key), AsyncStorage.getItem(orderKey)]).then(
-      ([saved, savedOrder]) => {
-        setSelectedAlignment((saved as Alignment) ?? null);
-        setSelectedOrder((savedOrder as AlignmentOrder) ?? null);
-      }
-    );
+    const jobKey = `job_variant_${dofus.id}_${activeCharacterId}`;
+    Promise.all([
+      AsyncStorage.getItem(key),
+      AsyncStorage.getItem(orderKey),
+      AsyncStorage.getItem(jobKey),
+    ]).then(([saved, savedOrder, savedJob]) => {
+      setSelectedAlignment((saved as Alignment) ?? null);
+      setSelectedOrder((savedOrder as AlignmentOrder) ?? null);
+      setSelectedJob((savedJob as JobVariant) ?? null);
+    });
   }, [dofus?.id, activeCharacterId]);
 
   async function handleAlignmentChange(alignment: Alignment | null) {
@@ -105,6 +111,14 @@ export default function DofusDetailScreen() {
     const orderKey = `alignment_order_${dofus.id}_${activeCharacterId}`;
     if (order) await AsyncStorage.setItem(orderKey, order);
     else await AsyncStorage.removeItem(orderKey);
+  }
+
+  async function handleJobChange(job: JobVariant | null) {
+    if (!activeCharacterId || !dofus) return;
+    setSelectedJob(job);
+    const jobKey = `job_variant_${dofus.id}_${activeCharacterId}`;
+    if (job) await AsyncStorage.setItem(jobKey, job);
+    else await AsyncStorage.removeItem(jobKey);
   }
 
   // Wrapper qui intercepte les erreurs réseau avant le rollback de useQuestToggle
@@ -179,17 +193,22 @@ export default function DofusDetailScreen() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Alignment filtering
+  // Alignment + job variant detection
   const alignments = [...new Set(quests.map((q) => q.chain.alignment).filter(Boolean))] as Alignment[];
   const hasAlignment = alignments.length > 0;
   const hasNeutre = alignments.includes("neutre");
+  const hasJobVariant = quests.some((q) => q.chain.job_variant !== null);
 
   function isQuestVisible(q: QuestWithChain): boolean {
+    // Job variant filter: hide job-specific quests if wrong/no job selected
+    if (q.chain.job_variant !== null) {
+      if (!selectedJob || q.chain.job_variant !== selectedJob) return false;
+    }
+    // Alignment filter
     if (!hasAlignment || !selectedAlignment) return true;
     const a = q.chain.alignment;
     if (a === null) return true;
     if (a !== selectedAlignment) return false;
-    // Order quests: only shown when their specific order is selected
     if (q.chain.alignment_order !== null) {
       return q.chain.alignment_order === selectedOrder;
     }
@@ -314,6 +333,33 @@ export default function DofusDetailScreen() {
           </View>
         )}
 
+        {hasJobVariant && (
+          <View className="rounded-xl border border-white/10 bg-white/5 p-4 mb-4 gap-3">
+            <Text className="text-sm font-medium text-gray-300">Métier</Text>
+            <View className="flex-row flex-wrap gap-2">
+              <TouchableOpacity
+                onPress={() => handleJobChange(selectedJob === "paysan" ? null : "paysan")}
+                className={`px-3 py-1.5 rounded-full ${selectedJob === "paysan" ? "bg-yellow-600" : "bg-white/10"}`}
+              >
+                <Text className={`text-sm font-medium ${selectedJob === "paysan" ? "text-white" : "text-gray-400"}`}>
+                  Paysan
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleJobChange(selectedJob === "alchimiste" ? null : "alchimiste")}
+                className={`px-3 py-1.5 rounded-full ${selectedJob === "alchimiste" ? "bg-green-600" : "bg-white/10"}`}
+              >
+                <Text className={`text-sm font-medium ${selectedJob === "alchimiste" ? "text-white" : "text-gray-400"}`}>
+                  Alchimiste
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {!selectedJob && (
+              <Text className="text-xs text-gray-500">Sélectionne ton métier pour voir les quêtes correspondantes.</Text>
+            )}
+          </View>
+        )}
+
         {prerequisiteGroups.map(({ title, quests: groupQuests }) => (
           <QuestSection
             key={title}
@@ -321,8 +367,8 @@ export default function DofusDetailScreen() {
             quests={groupQuests}
             dofusColor={dofus.color}
             onToggle={offlineHandleToggle}
-            onBulkComplete={() => handleBulkComplete("prerequisite" as QuestSectionType)}
-            onBulkUncomplete={() => handleBulkUncomplete("prerequisite" as QuestSectionType)}
+            onBulkComplete={() => handleBulkComplete("prerequisite" as QuestSectionType, selectedJob)}
+            onBulkUncomplete={() => handleBulkUncomplete("prerequisite" as QuestSectionType, selectedJob)}
           />
         ))}
         {mainQuestGroups.map(({ title, quests: groupQuests }) => (
@@ -332,8 +378,8 @@ export default function DofusDetailScreen() {
             quests={groupQuests}
             dofusColor={dofus.color}
             onToggle={offlineHandleToggle}
-            onBulkComplete={() => handleBulkComplete("main" as QuestSectionType)}
-            onBulkUncomplete={() => handleBulkUncomplete("main" as QuestSectionType)}
+            onBulkComplete={() => handleBulkComplete("main" as QuestSectionType, selectedJob)}
+            onBulkUncomplete={() => handleBulkUncomplete("main" as QuestSectionType, selectedJob)}
           />
         ))}
         {aggregatedResources.length > 0 && (

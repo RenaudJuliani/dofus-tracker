@@ -6,7 +6,7 @@ import {
   bulkUncompleteSection,
   getQuestsForDofus,
 } from "@dofus-tracker/db";
-import type { QuestWithChain, QuestSection } from "@dofus-tracker/types";
+import type { QuestWithChain, QuestSection, JobVariant } from "@dofus-tracker/types";
 
 interface Params {
   supabase: SupabaseClient;
@@ -34,15 +34,17 @@ export function useQuestToggle({ supabase, characterId, dofusId, setQuests }: Pa
   );
 
   const handleBulkComplete = useCallback(
-    async (section: QuestSection) => {
+    async (section: QuestSection, jobVariant?: JobVariant | null) => {
       if (!characterId) return;
       setQuests((prev) =>
-        prev.map((q) =>
-          q.chain.section === section ? { ...q, is_completed: true } : q
-        )
+        prev.map((q) => {
+          if (q.chain.section !== section) return q;
+          if (q.chain.job_variant !== null && q.chain.job_variant !== jobVariant) return q;
+          return { ...q, is_completed: true };
+        })
       );
       try {
-        await bulkCompleteSection(supabase, characterId, dofusId, section);
+        await bulkCompleteSection(supabase, characterId, dofusId, section, jobVariant);
       } catch {
         const fresh = await getQuestsForDofus(supabase, dofusId, characterId);
         setQuests(fresh);
@@ -52,15 +54,17 @@ export function useQuestToggle({ supabase, characterId, dofusId, setQuests }: Pa
   );
 
   const handleBulkUncomplete = useCallback(
-    async (section: QuestSection) => {
+    async (section: QuestSection, jobVariant?: JobVariant | null) => {
       if (!characterId) return;
       setQuests((prev) =>
-        prev.map((q) =>
-          q.chain.section === section ? { ...q, is_completed: false } : q
-        )
+        prev.map((q) => {
+          if (q.chain.section !== section) return q;
+          if (q.chain.job_variant !== null && q.chain.job_variant !== jobVariant) return q;
+          return { ...q, is_completed: false };
+        })
       );
       try {
-        await bulkUncompleteSection(supabase, characterId, dofusId, section);
+        await bulkUncompleteSection(supabase, characterId, dofusId, section, jobVariant);
       } catch {
         const fresh = await getQuestsForDofus(supabase, dofusId, characterId);
         setQuests(fresh);
