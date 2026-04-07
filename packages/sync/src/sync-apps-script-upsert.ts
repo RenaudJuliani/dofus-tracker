@@ -130,14 +130,16 @@ export async function syncAllFromAppsScript(
 
         if (!alreadyUpserted) {
           // Quest not in Sheet for this dofus — insert with a high order_index so it lands at the end
+          const subSection = getSubSection(dofusSlug, oq.slug);
+          const section = subSection?.startsWith("Prérequis") ? "prerequisite" : "main";
           const { error: extraChainError } = await client
             .from("dofus_quest_chains")
             .upsert(
               {
                 dofus_id: dofusId,
                 quest_id: oq.id,
-                section: "main",
-                sub_section: null,
+                section,
+                sub_section: subSection ?? null,
                 order_index: 9000 + overrideSlugs.indexOf(oq.slug),
                 group_id: null,
                 quest_types: [],
