@@ -7,7 +7,8 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "sync": "pnpm --filter @dofus-tracker/sync run start"
+    "sync": "pnpm --filter @dofus-tracker/sync run start",
+    "postinstall": "pnpm --filter @dofus-tracker/types build && pnpm --filter @dofus-tracker/db build"
   },
   "devDependencies": {
     "turbo": "^2.1.0",
