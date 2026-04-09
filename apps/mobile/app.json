@@ -26,6 +26,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0989a302-3ac2-4964-9249-65d529b0cb1f"
+      }
+    },
+    "owner": "stow"
   }
 }
