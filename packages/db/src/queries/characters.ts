@@ -18,11 +18,12 @@ export async function createCharacter(
   client: SupabaseClient,
   userId: string,
   name: string,
-  characterClass: string
+  characterClass: string,
+  gender: "m" | "f"
 ): Promise<Character> {
   const { data, error } = await client
     .from("characters")
-    .insert({ user_id: userId, name, character_class: characterClass })
+    .insert({ user_id: userId, name, character_class: characterClass, gender })
     .select()
     .single();
   if (error) throw error;

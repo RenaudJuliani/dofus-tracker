@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useSupabase } from "@/app/providers";
 import { useCharacterStore } from "@/lib/stores/characterStore";
 import { updateCharacter, deleteCharacter } from "@dofus-tracker/db";
 import { DofusCard } from "@/components/home/DofusCard";
+import { classImageUrl } from "@/lib/classImageUrl";
 import type { Character, Dofus, DofusProgress } from "@dofus-tracker/types";
 
 interface Props {
@@ -54,8 +56,19 @@ export function CharacterDetail({ character, dofusList, progressForCharacter, us
   return (
     <div className="space-y-6">
       {/* Header stats */}
-      <div className="glass rounded-2xl p-5">
-        <div className="flex items-start justify-between gap-4">
+      <div className="glass rounded-2xl p-5 overflow-hidden relative">
+        {classImageUrl(character.character_class, character.gender) && (
+          <div className="absolute right-0 top-0 h-full w-32 pointer-events-none">
+            <Image
+              src={classImageUrl(character.character_class, character.gender)!}
+              alt=""
+              fill
+              className="object-cover object-top opacity-20"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+          </div>
+        )}
+        <div className="relative z-10 flex items-start justify-between gap-4">
           <div>
             {renaming ? (
               <input

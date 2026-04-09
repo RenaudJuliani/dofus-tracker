@@ -58,6 +58,7 @@ export interface DofusQuestChain {
   alignment: Alignment | null;
   alignment_order: AlignmentOrder | null;
   job_variant: JobVariant | null;
+  note: string | null;
 }
 
 /** Ressource requise pour une quête spécifique */
@@ -88,6 +89,7 @@ export interface Character {
   user_id: string;
   name: string;
   character_class: string;
+  gender: "m" | "f";
   created_at: string;
 }
 
