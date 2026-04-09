@@ -28,7 +28,7 @@ export function CharacterDetail({ character, dofusList, progressForCharacter, us
 
   const progressMap = new Map(progressForCharacter.map((p) => [p.dofus_id, p]));
   const globalPct = progressForCharacter.length > 0
-    ? Math.round(progressForCharacter.reduce((s, p) => s + p.progress_pct, 0) / progressForCharacter.length)
+    ? Math.min(100, Math.round(progressForCharacter.reduce((s, p) => s + p.progress_pct, 0) / progressForCharacter.length))
     : 0;
   const totalCompleted = progressForCharacter.reduce((s, p) => s + p.completed_quests, 0);
   const totalQuests = progressForCharacter.reduce((s, p) => s + p.total_quests, 0);

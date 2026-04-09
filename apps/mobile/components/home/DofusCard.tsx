@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function DofusCard({ dofus, progress }: Props) {
-  const pct = progress?.progress_pct ?? 0;
+  const pct = Math.min(100, progress?.progress_pct ?? 0);
   const completed = progress?.completed_quests ?? 0;
   const total = progress?.total_quests ?? 0;
 
