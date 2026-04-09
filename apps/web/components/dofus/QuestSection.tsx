@@ -8,6 +8,7 @@ interface Props {
   title: string;
   quests: QuestWithChain[];
   dofusColor: string;
+  note?: string;
   onToggle: (questId: string, completed: boolean) => void;
   onBulkComplete: () => void;
   onBulkUncomplete: () => void;
@@ -35,7 +36,7 @@ function groupQuests(quests: QuestWithChain[]): Array<QuestWithChain | QuestWith
   return result;
 }
 
-export function QuestSection({ title, quests, dofusColor, onToggle, onBulkComplete, onBulkUncomplete }: Props) {
+export function QuestSection({ title, quests, dofusColor, note, onToggle, onBulkComplete, onBulkUncomplete }: Props) {
   const [expanded, setExpanded] = useState(true);
   const completedCount = quests.filter((q) => q.is_completed).length;
   const allCompleted = completedCount === quests.length;
@@ -66,17 +67,26 @@ export function QuestSection({ title, quests, dofusColor, onToggle, onBulkComple
 
       {/* Quest list */}
       {expanded && <div className="divide-y divide-white/[0.04] p-2 space-y-0.5">
+        {note && (
+          <p className="text-xs text-amber-400/80 bg-amber-400/5 border border-amber-400/20 rounded-lg px-3 py-2 mb-1">
+            {note}
+          </p>
+        )}
         {grouped.map((item, idx) => {
           if (Array.isArray(item)) {
-            // Group box
+            const groupNote = item[0].chain.note;
+            const borderColor = groupNote ? "#22d3ee44" : "#f9731644";
+            const bgColor = groupNote ? "#22d3ee08" : "#f9731608";
+            const headerColor = groupNote ? "text-cyan-400" : "text-orange-400";
+            const borderHeaderColor = groupNote ? "border-cyan-400/20" : "border-orange-400/20";
             return (
               <div
                 key={item[0].chain.group_id ?? idx}
                 className="rounded-xl overflow-hidden border"
-                style={{ borderColor: "#f9731644", background: "#f9731608" }}
+                style={{ borderColor, background: bgColor }}
               >
-                <div className="px-3 py-1.5 text-xs font-semibold text-orange-400 border-b border-orange-400/20">
-                  ⚠ Faire ensemble
+                <div className={`px-3 py-1.5 text-xs font-semibold border-b ${headerColor} ${borderHeaderColor}`}>
+                  {groupNote ?? "⚠ Faire ensemble"}
                 </div>
                 {item.map((quest) => (
                   <QuestItem

@@ -4,6 +4,8 @@ import { getSubSection } from "./sub-section-overrides.js";
 import { getAlignmentOverride, getAlignmentOverrideSlugsForDofus } from "./alignment-overrides.js";
 import { getJobVariantOverride, getJobVariantPairs } from "./job-variant-overrides.js";
 import { getUrlOverride } from "./url-overrides.js";
+import { getGroupOverride } from "./group-overrides.js";
+import { getNoteOverride } from "./quest-note-overrides.js";
 
 export interface FullSyncReport {
   questsUpserted: number;
@@ -79,6 +81,8 @@ export async function syncAllFromAppsScript(
       const subSection = getSubSection(entry.dofusSlug, entry.questSlug);
       const alignmentOverride = getAlignmentOverride(entry.dofusSlug, entry.questSlug);
       const jobVariantOverride = getJobVariantOverride(entry.dofusSlug, entry.questSlug);
+      const groupOverride = getGroupOverride(dofusSlug, entry.questSlug);
+      const noteOverride = getNoteOverride(dofusSlug, entry.questSlug);
 
       const { error: chainError } = await client
         .from("dofus_quest_chains")
@@ -89,7 +93,8 @@ export async function syncAllFromAppsScript(
             section: entry.section,
             sub_section: subSection,
             order_index: entry.orderIndex,
-            group_id: null,
+            group_id: groupOverride,
+            note: noteOverride,
             quest_types: [],
             combat_count: null,
             is_avoidable: false,
@@ -215,6 +220,7 @@ export async function syncAllFromAppsScript(
         }
 
         // Upsert alchimiste chain at the same position as paysan
+        const alchiGroupOverride = getGroupOverride(dofusSlug, pair.alchimisteSlug);
         const { error: alchiChainError } = await client
           .from("dofus_quest_chains")
           .upsert(
@@ -224,7 +230,7 @@ export async function syncAllFromAppsScript(
               section: paysanChain.section,
               sub_section: paysanChain.sub_section,
               order_index: paysanChain.order_index,
-              group_id: null,
+              group_id: alchiGroupOverride,
               quest_types: [],
               combat_count: null,
               is_avoidable: false,

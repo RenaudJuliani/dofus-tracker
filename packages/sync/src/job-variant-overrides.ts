@@ -10,15 +10,15 @@ const RAW_PAIRS: Array<{ dofusSlug: string; pairs: JobVariantPair[] }> = [
   {
     dofusSlug: "dofus-des-glaces",
     pairs: [
-      { alchimiste: "Cent Vingt trois fleurs",               paysan: "En semant, se ment" },
+      { alchimiste: "Cent vingt trois fleus",                 paysan: "En semant, se ment" },
       { alchimiste: "Botanique-nique-nique",                  paysan: "Pomdeupin vaut mieux que trois tu l'auras" },
       { alchimiste: "A fleur de peau",                        paysan: "Massacre au hakapik" },
       { alchimiste: "Mes lys fleurs",                         paysan: "Mettre son grain de sel" },
       { alchimiste: "Rose a lys, rose a lys, oh !",           paysan: "Mauvaise graine" },
-      { alchimiste: "Fleuris mais rougissent",                paysan: "Champ pomy" },
+      { alchimiste: "Fleuries mais rougissent",               paysan: "Champ pomy" },
       { alchimiste: "Heureux qui comme les lys",              paysan: "Gant graine" },
       { alchimiste: "Le nom de la mycose",                    paysan: "Les graines de la discorde" },
-      { alchimiste: "Crocs n'en bourrent",                    paysan: "Le champ des heros" },
+      { alchimiste: "Crocs n'en bourront",                    paysan: "Le champ des heros" },
       { alchimiste: "Ville fleurie",                          paysan: "Champ borde le chateau" },
     ],
   },

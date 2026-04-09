@@ -10,12 +10,13 @@ interface Props {
   title: string;
   quests: QuestWithChain[];
   dofusColor: string;
+  note?: string;
   onToggle: (questId: string, completed: boolean) => void;
   onBulkComplete: () => void;
   onBulkUncomplete: () => void;
 }
 
-export function QuestSection({ title, quests, dofusColor, onToggle, onBulkComplete, onBulkUncomplete }: Props) {
+export function QuestSection({ title, quests, dofusColor, note, onToggle, onBulkComplete, onBulkUncomplete }: Props) {
   const [expanded, setExpanded] = useState(true);
   const completedCount = quests.filter((q) => q.is_completed).length;
   const allCompleted = completedCount === quests.length;
@@ -28,8 +29,9 @@ export function QuestSection({ title, quests, dofusColor, onToggle, onBulkComple
     if (gid && !seen.has(gid)) {
       seen.add(gid);
       const group = quests.filter((q) => q.chain.group_id === gid);
+      const groupNote = group[0].chain.note;
       rendered.push(
-        <QuestGroupBox key={gid}>
+        <QuestGroupBox key={gid} note={groupNote}>
           {group.map((q) => (
             <QuestItem key={q.id} quest={q} dofusColor={dofusColor} onToggle={onToggle} />
           ))}
@@ -61,7 +63,16 @@ export function QuestSection({ title, quests, dofusColor, onToggle, onBulkComple
             <Text className="text-xs text-gray-400">{allCompleted ? "Tout décocher" : "Tout cocher"}</Text>
           </TouchableOpacity>
         </View>
-        {expanded && rendered}
+        {expanded && (
+          <>
+            {note && (
+              <View className="bg-amber-400/5 border border-amber-400/20 rounded-lg px-3 py-2 mb-2">
+                <Text className="text-xs text-amber-400/80">{note}</Text>
+              </View>
+            )}
+            {rendered}
+          </>
+        )}
       </View>
     </BlurView>
   );

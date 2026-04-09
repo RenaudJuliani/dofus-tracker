@@ -24,7 +24,6 @@ import type {
   Dofus,
   QuestWithChain,
   AggregatedResource,
-  QuestSection as QuestSectionType,
   Alignment,
   AlignmentOrder,
   JobVariant,
@@ -218,7 +217,7 @@ export default function DofusDetailScreen() {
   const visibleQuests = quests.filter(isQuestVisible);
   const prerequisites = visibleQuests.filter((q) => q.chain.section === "prerequisite");
   const mainQuests = visibleQuests.filter((q) => q.chain.section === "main");
-  const completedCount = quests.filter((q) => q.is_completed).length;
+  const completedCount = visibleQuests.filter((q) => q.is_completed).length;
 
   const aggregatedResources: AggregatedResource[] = Object.values(
     quests.reduce(
@@ -273,7 +272,7 @@ export default function DofusDetailScreen() {
         <DofusHeader
           dofus={dofus}
           allDofus={allDofus}
-          quests={quests}
+          quests={visibleQuests}
           completedCount={completedCount}
         />
 
@@ -366,9 +365,12 @@ export default function DofusDetailScreen() {
             title={title}
             quests={groupQuests}
             dofusColor={dofus.color}
+            note={dofus.slug === "dofus-cauchemar" && title === "Prérequis - La fin"
+              ? 'Lancez la quête "Les quatre volontés" qui vous demande de faire les quatre donjons de l\'éliocalypse. Une fois les quatre donjons terminés, vous pouvez valider la quête.'
+              : undefined}
             onToggle={offlineHandleToggle}
-            onBulkComplete={() => handleBulkComplete("prerequisite" as QuestSectionType, selectedJob)}
-            onBulkUncomplete={() => handleBulkUncomplete("prerequisite" as QuestSectionType, selectedJob)}
+            onBulkComplete={() => handleBulkComplete(groupQuests.map((q) => q.id))}
+            onBulkUncomplete={() => handleBulkUncomplete(groupQuests.map((q) => q.id))}
           />
         ))}
         {mainQuestGroups.map(({ title, quests: groupQuests }) => (
@@ -378,8 +380,8 @@ export default function DofusDetailScreen() {
             quests={groupQuests}
             dofusColor={dofus.color}
             onToggle={offlineHandleToggle}
-            onBulkComplete={() => handleBulkComplete("main" as QuestSectionType, selectedJob)}
-            onBulkUncomplete={() => handleBulkUncomplete("main" as QuestSectionType, selectedJob)}
+            onBulkComplete={() => handleBulkComplete(groupQuests.map((q) => q.id))}
+            onBulkUncomplete={() => handleBulkUncomplete(groupQuests.map((q) => q.id))}
           />
         ))}
         {aggregatedResources.length > 0 && (

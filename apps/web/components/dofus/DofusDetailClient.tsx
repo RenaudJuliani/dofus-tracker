@@ -12,7 +12,13 @@ import {
 import { DofusHeader } from "./DofusHeader";
 import { QuestSection } from "./QuestSection";
 import { ResourcePanel } from "./ResourcePanel";
-import type { Dofus, QuestWithChain, AggregatedResource, QuestSection as QuestSectionType, Alignment, AlignmentOrder, JobVariant } from "@dofus-tracker/types";
+import type { Dofus, QuestWithChain, AggregatedResource, Alignment, AlignmentOrder, JobVariant } from "@dofus-tracker/types";
+
+const SECTION_NOTES: Record<string, Record<string, string>> = {
+  "dofus-cauchemar": {
+    "Prérequis - La fin": 'Lancez la quête "Les quatre volontés" qui vous demande de faire les quatre donjons de l\'éliocalypse. Une fois les quatre donjons terminés, vous pouvez valider la quête.',
+  },
+};
 
 const ALIGNMENT_LABELS: Record<Alignment, string> = {
   neutre: "Neutre",
@@ -115,34 +121,26 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
     }
   }
 
-  async function handleBulkComplete(section: QuestSectionType, jobVariant?: JobVariant | null) {
+  async function handleBulkComplete(questIds: string[]) {
     if (!activeCharacterId) return;
     setQuests((prev) =>
-      prev.map((q) => {
-        if (q.chain.section !== section) return q;
-        if (q.chain.job_variant !== null && q.chain.job_variant !== jobVariant) return q;
-        return { ...q, is_completed: true };
-      })
+      prev.map((q) => (questIds.includes(q.id) ? { ...q, is_completed: true } : q))
     );
     try {
-      await bulkCompleteSection(supabase, activeCharacterId, dofus.id, section, jobVariant);
+      await bulkCompleteSection(supabase, activeCharacterId, questIds);
     } catch {
       const fresh = await getQuestsForDofus(supabase, dofus.id, activeCharacterId);
       setQuests(fresh);
     }
   }
 
-  async function handleBulkUncomplete(section: QuestSectionType, jobVariant?: JobVariant | null) {
+  async function handleBulkUncomplete(questIds: string[]) {
     if (!activeCharacterId) return;
     setQuests((prev) =>
-      prev.map((q) => {
-        if (q.chain.section !== section) return q;
-        if (q.chain.job_variant !== null && q.chain.job_variant !== jobVariant) return q;
-        return { ...q, is_completed: false };
-      })
+      prev.map((q) => (questIds.includes(q.id) ? { ...q, is_completed: false } : q))
     );
     try {
-      await bulkUncompleteSection(supabase, activeCharacterId, dofus.id, section, jobVariant);
+      await bulkUncompleteSection(supabase, activeCharacterId, questIds);
     } catch {
       const fresh = await getQuestsForDofus(supabase, dofus.id, activeCharacterId);
       setQuests(fresh);
@@ -173,7 +171,7 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
   }
 
   const visibleQuests = quests.filter(isQuestVisible);
-  const completedCount = quests.filter((q) => q.is_completed).length;
+  const completedCount = visibleQuests.filter((q) => q.is_completed).length;
 
   // Group all quests by sub_section, keeping section info for bulk actions
   const allGroups: Array<{ title: string; section: QuestSectionType; quests: typeof visibleQuests }> = [];
@@ -226,7 +224,7 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
           <DofusHeader
             dofus={dofus}
             allDofus={allDofus}
-            quests={quests}
+            quests={visibleQuests}
             completedCount={completedCount}
           />
 
@@ -328,15 +326,16 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
             <p className="text-gray-400 text-sm animate-pulse">Chargement des quêtes…</p>
           ) : (
             <>
-              {allGroups.map(({ title, section, quests: groupQuests }) => (
+              {allGroups.map(({ title, quests: groupQuests }) => (
                 <QuestSection
                   key={title}
                   title={title}
                   quests={groupQuests}
                   dofusColor={dofus.color}
+                  note={SECTION_NOTES[dofus.slug]?.[title]}
                   onToggle={handleToggle}
-                  onBulkComplete={() => handleBulkComplete(section, selectedJob)}
-                  onBulkUncomplete={() => handleBulkUncomplete(section, selectedJob)}
+                  onBulkComplete={() => handleBulkComplete(groupQuests.map((q) => q.id))}
+                  onBulkUncomplete={() => handleBulkUncomplete(groupQuests.map((q) => q.id))}
                 />
               ))}
             </>

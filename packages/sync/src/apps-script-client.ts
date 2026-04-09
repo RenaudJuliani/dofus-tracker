@@ -39,11 +39,9 @@ export interface QuestChainEntry {
   resources: Array<{ name: string; quantity: number; is_kamas: boolean }>;
 }
 
-const SECTION_MAP: Record<string, QuestSection> = {
-  "Prérequis": "prerequisite",
-  "Chaîne principale": "main",
-  "Les quêtes": "main",
-};
+function classifySection(title: string): QuestSection {
+  return title.startsWith("Prérequis") ? "prerequisite" : "main";
+}
 
 /** Fetch the Apps Script web endpoint and return parsed JSON */
 export async function fetchAppsScriptData(url: string): Promise<AppsScriptData> {
@@ -65,12 +63,12 @@ export function extractAllQuests(data: AppsScriptData): QuestChainEntry[] {
 
     for (const section of sections) {
       const sectionKey = section.titre?.trim() ?? "";
-      const mappedSection: QuestSection = SECTION_MAP[sectionKey] ?? "main";
+      const mappedSection: QuestSection = classifySection(sectionKey);
 
       for (const subSection of section.sous_sections) {
         // Sub-section titre may override the parent section (e.g. "Prérequis" as a sous-section of "Les quêtes")
         const subSectionKey = subSection.titre?.trim() ?? "";
-        const effectiveSection: QuestSection = SECTION_MAP[subSectionKey] ?? mappedSection;
+        const effectiveSection: QuestSection = subSectionKey.startsWith("Prérequis") ? "prerequisite" : mappedSection;
 
         for (const quest of subSection.quetes) {
           const name = quest.nom?.trim();
@@ -84,7 +82,7 @@ export function extractAllQuests(data: AppsScriptData): QuestChainEntry[] {
             questName: name,
             questSlug: nameToSlug(name),
             orderIndex: orderIndex++,
-            resources: quest.ressources.map((r) => ({
+            resources: (quest.ressources ?? []).map((r) => ({
               name: r.nom,
               quantity: r.quantite,
               is_kamas: r.nom.toLowerCase() === "kamas",
@@ -117,7 +115,7 @@ export function extractQuestsWithResources(data: AppsScriptData): QuestWithResou
 
           seen.set(slug, {
             slug,
-            resources: quest.ressources.map((r) => ({
+            resources: (quest.ressources ?? []).map((r) => ({
               name: r.nom,
               quantity: r.quantite,
               is_kamas: r.nom.toLowerCase() === "kamas",

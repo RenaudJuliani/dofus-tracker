@@ -68,6 +68,12 @@ export function QuestItem({ quest, dofusColor, onToggle }: Props) {
             )}
           </View>
 
+          {chain.note && !chain.group_id && (
+            <View className="bg-cyan-400/5 border border-cyan-400/20 rounded-lg px-2 py-1.5">
+              <Text className="text-xs text-cyan-400/80">{chain.note}</Text>
+            </View>
+          )}
+
           <View className="flex-row flex-wrap gap-1.5">
             {chain.quest_types.map((type) => (
               <QuestTypeBadge key={type} type={type} combatCount={chain.combat_count} />

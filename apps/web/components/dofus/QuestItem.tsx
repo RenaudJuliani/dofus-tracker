@@ -73,6 +73,12 @@ export function QuestItem({ quest, dofusColor, onToggle }: Props) {
             )}
           </div>
 
+          {chain.note && !chain.group_id && (
+            <p className="text-xs text-cyan-400/80 bg-cyan-400/5 border border-cyan-400/20 rounded-lg px-2 py-1.5">
+              {chain.note}
+            </p>
+          )}
+
           <div className="flex items-center flex-wrap gap-1.5">
             {chain.quest_types.map((type) => {
               const badge = BADGE_CONFIG[type];
