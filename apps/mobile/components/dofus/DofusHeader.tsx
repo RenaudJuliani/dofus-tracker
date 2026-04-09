@@ -14,7 +14,7 @@ interface Props {
 export function DofusHeader({ dofus, quests, completedCount }: Props) {
   const total = quests.length;
   const remaining = total - completedCount;
-  const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+  const pct = total > 0 ? Math.min(100, Math.round((completedCount / total) * 100)) : 0;
 
   return (
     <BlurView intensity={60} tint="dark" className="rounded-2xl overflow-hidden mb-4">

@@ -13,7 +13,7 @@ interface Props {
 function getCharacterStats(characterId: string, allProgress: DofusProgress[]) {
   const rows = allProgress.filter((p) => p.character_id === characterId);
   if (rows.length === 0) return { globalPct: 0, completedDofus: 0, totalDofus: 0 };
-  const globalPct = Math.round(rows.reduce((sum, r) => sum + r.progress_pct, 0) / rows.length);
+  const globalPct = Math.min(100, Math.round(rows.reduce((sum, r) => sum + r.progress_pct, 0) / rows.length));
   const completedDofus = rows.filter((r) => r.progress_pct === 100).length;
   return { globalPct, completedDofus, totalDofus: rows.length };
 }

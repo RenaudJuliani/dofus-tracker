@@ -81,9 +81,9 @@ SELECT
   d.name             AS dofus_name,
   dr.reachable_total AS total_quests,
   COUNT(uqc.quest_id) AS completed_quests,
-  ROUND(
+  LEAST(100, ROUND(
     COUNT(uqc.quest_id)::numeric / NULLIF(dr.reachable_total, 0) * 100
-  ) AS progress_pct
+  )) AS progress_pct
 FROM dofus d
 JOIN dofus_reachable dr ON dr.dofus_id = d.id
 JOIN dofus_quest_chains dqc ON dqc.dofus_id = d.id

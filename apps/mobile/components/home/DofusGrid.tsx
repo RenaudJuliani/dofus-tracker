@@ -17,7 +17,7 @@ function GlobalProgress({ dofusList, progressMap }: Pick<Props, "dofusList" | "p
     (d) => (progressMap.get(d.id)?.progress_pct ?? 0) >= 100
   ).length;
   const total = dofusList.length;
-  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
   return (
     <View className="mx-2 mb-2 px-4 py-3 rounded-2xl" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>

@@ -12,7 +12,7 @@ interface Props {
 export function DofusHeader({ dofus, allDofus, quests, completedCount }: Props) {
   const total = quests.length;
   const remaining = total - completedCount;
-  const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+  const pct = total > 0 ? Math.min(100, Math.round((completedCount / total) * 100)) : 0;
 
   // Compute which other Dofus share quests with this one
   const sharedDofusIds = new Set(quests.flatMap((q) => q.shared_dofus_ids));
