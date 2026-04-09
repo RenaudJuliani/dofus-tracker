@@ -6,6 +6,7 @@ import { getJobVariantOverride, getJobVariantPairs } from "./job-variant-overrid
 import { getUrlOverride } from "./url-overrides.js";
 import { getGroupOverride } from "./group-overrides.js";
 import { getNoteOverride } from "./quest-note-overrides.js";
+import { getDofusType } from "./dofus-type.js";
 
 export interface FullSyncReport {
   questsUpserted: number;
@@ -35,7 +36,7 @@ export async function syncAllFromAppsScript(
     const { data: dofusRow, error: dofusError } = await client
       .from("dofus")
       .upsert(
-        { name: dofusName, slug: dofusSlug, type: "primordial", color: "#4ade80", description: "", recommended_level: 0 },
+        { name: dofusName, slug: dofusSlug, type: getDofusType(dofusSlug), color: "#4ade80", description: "", recommended_level: 0 },
         { onConflict: "slug" }
       )
       .select("id")

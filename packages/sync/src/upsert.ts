@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseQuestRow, SECTION_MAP, type ParsedQuestRow } from "./parsers/quest-row-parser.js";
+import { getDofusType } from "./dofus-type.js";
 
 type ParsedWithSubSection = ParsedQuestRow & { sub_section: string | null };
 import { assignGroupIds } from "./parsers/group-detector.js";
@@ -29,7 +30,7 @@ export async function syncTabToSupabase(
         {
           name: tab.dofusName,
           slug: tab.dofusSlug,
-          type: "primordial",
+          type: getDofusType(tab.dofusSlug),
           color: "#4ade80",
           description: "",
           recommended_level: 0,
