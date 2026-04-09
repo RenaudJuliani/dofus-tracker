@@ -171,7 +171,7 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
   }
 
   const visibleQuests = quests.filter(isQuestVisible);
-  const completedCount = visibleQuests.filter((q) => q.is_completed).length;
+  const completedCount = quests.filter((q) => q.is_completed).length;
 
   // Group all quests by sub_section, keeping section info for bulk actions
   const allGroups: Array<{ title: string; section: QuestSectionType; quests: typeof visibleQuests }> = [];
@@ -224,7 +224,7 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
           <DofusHeader
             dofus={dofus}
             allDofus={allDofus}
-            quests={visibleQuests}
+            quests={quests}
             completedCount={completedCount}
           />
 

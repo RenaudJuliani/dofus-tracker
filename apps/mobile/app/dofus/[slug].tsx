@@ -217,7 +217,7 @@ export default function DofusDetailScreen() {
   const visibleQuests = quests.filter(isQuestVisible);
   const prerequisites = visibleQuests.filter((q) => q.chain.section === "prerequisite");
   const mainQuests = visibleQuests.filter((q) => q.chain.section === "main");
-  const completedCount = visibleQuests.filter((q) => q.is_completed).length;
+  const completedCount = quests.filter((q) => q.is_completed).length;
 
   const aggregatedResources: AggregatedResource[] = Object.values(
     quests.reduce(
@@ -272,7 +272,7 @@ export default function DofusDetailScreen() {
         <DofusHeader
           dofus={dofus}
           allDofus={allDofus}
-          quests={visibleQuests}
+          quests={quests}
           completedCount={completedCount}
         />
 
