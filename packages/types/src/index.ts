@@ -77,6 +77,18 @@ export interface AggregatedResource {
   is_kamas: boolean;
 }
 
+export interface QuestSearchResult {
+  quest_id: string;
+  quest_name: string;
+  quest_slug: string;
+  sub_section: string | null;
+  dofus_id: string;
+  dofus_name: string;
+  dofus_slug: string;
+  dofus_color: string;
+  dofus_image_url: string | null;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
