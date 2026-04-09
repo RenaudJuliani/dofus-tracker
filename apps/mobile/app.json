@@ -17,6 +17,7 @@
     "android": {
       "package": "com.dofustracker.app",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#080e0a"
       }
     },
