@@ -12,7 +12,7 @@ import {
 import { DofusHeader } from "./DofusHeader";
 import { QuestSection } from "./QuestSection";
 import { ResourcePanel } from "./ResourcePanel";
-import type { Dofus, QuestWithChain, AggregatedResource, Alignment, AlignmentOrder, JobVariant } from "@dofus-tracker/types";
+import type { Dofus, QuestWithChain, QuestSection as QuestSectionType, AggregatedResource, Alignment, AlignmentOrder, JobVariant } from "@dofus-tracker/types";
 
 const SECTION_NOTES: Record<string, Record<string, string>> = {
   "dofus-cauchemar": {
