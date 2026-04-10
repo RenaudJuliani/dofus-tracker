@@ -19,11 +19,20 @@ export default function MesDofusScreen() {
   const [progressMap, setProgressMap] = useState<Map<string, DofusProgress>>(new Map());
   const [characters, setCharacters] = useState<Character[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  // AsyncStorage rehydration is truly async — gate data fetches on hydration
+  // to avoid the initial render with activeCharacterId=null skipping progress.
+  const [hydrated, setHydrated] = useState(() => useCharacterStore.persist.hasHydrated());
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [searchResults, setSearchResults] = useState<QuestSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const { show } = useToast();
+
+  useEffect(() => {
+    if (hydrated) return;
+    return useCharacterStore.persist.onFinishHydration(() => setHydrated(true));
+  }, [hydrated]);
 
   const preCacheQuests = useCallback(async (dofus: Dofus[], characterId: string) => {
     for (const d of dofus) {
@@ -42,7 +51,7 @@ export default function MesDofusScreen() {
   const loadData = useCallback(async () => {
     setRefreshing(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setRefreshing(false); return; }
+    if (!user) { setRefreshing(false); setLoading(false); return; }
 
     try {
       const [allDofus, allChars] = await Promise.all([
@@ -79,9 +88,19 @@ export default function MesDofusScreen() {
       }
     }
     setRefreshing(false);
+    setLoading(false);
   }, [activeCharacterId, show, preCacheQuests]);
 
-  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+  // Reload on focus (covers navigation-back refresh) — only once hydrated
+  useFocusEffect(useCallback(() => {
+    if (hydrated) loadData();
+  }, [loadData, hydrated]));
+
+  // Trigger once when hydration completes in case the screen is already focused
+  useEffect(() => {
+    if (hydrated) loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), 300);
@@ -133,6 +152,7 @@ export default function MesDofusScreen() {
           progressMap={progressMap}
           refreshing={refreshing}
           onRefresh={loadData}
+          loading={loading}
         />
       )}
     </View>

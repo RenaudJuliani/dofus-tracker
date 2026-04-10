@@ -8,9 +8,10 @@ import type { Dofus, DofusProgress } from "@dofus-tracker/types";
 interface Props {
   dofus: Dofus;
   progress: DofusProgress | null;
+  loading?: boolean;
 }
 
-export function DofusCard({ dofus, progress }: Props) {
+export function DofusCard({ dofus, progress, loading }: Props) {
   const pct = Math.min(100, progress?.progress_pct ?? 0);
   const completed = progress?.completed_quests ?? 0;
   const total = progress?.total_quests ?? 0;
@@ -38,13 +39,22 @@ export function DofusCard({ dofus, progress }: Props) {
           </Text>
 
           <View className="mt-auto">
-            <View className="flex-row justify-between items-center mb-1">
-              <Text className="text-xs text-gray-400">{completed}/{total}</Text>
-              <Text className="text-xs font-bold" style={{ color: dofus.color }}>
-                {pct}%
-              </Text>
-            </View>
-            <ProgressBar pct={pct} color={dofus.color} />
+            {loading ? (
+              <View className="space-y-1.5">
+                <View className="h-2.5 rounded bg-white/10 w-3/4" />
+                <View className="h-1.5 rounded bg-white/10" />
+              </View>
+            ) : (
+              <>
+                <View className="flex-row justify-between items-center mb-1">
+                  <Text className="text-xs text-gray-400">{completed}/{total}</Text>
+                  <Text className="text-xs font-bold" style={{ color: dofus.color }}>
+                    {pct}%
+                  </Text>
+                </View>
+                <ProgressBar pct={pct} color={dofus.color} />
+              </>
+            )}
           </View>
         </View>
       </BlurView>

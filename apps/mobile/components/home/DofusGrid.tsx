@@ -8,6 +8,7 @@ interface Props {
   progressMap: Map<string, DofusProgress>;
   refreshing: boolean;
   onRefresh: () => void;
+  loading?: boolean;
 }
 
 function GlobalProgress({ dofusList, progressMap }: Pick<Props, "dofusList" | "progressMap">) {
@@ -33,7 +34,7 @@ function GlobalProgress({ dofusList, progressMap }: Pick<Props, "dofusList" | "p
   );
 }
 
-export function DofusGrid({ dofusList, progressMap, refreshing, onRefresh }: Props) {
+export function DofusGrid({ dofusList, progressMap, refreshing, onRefresh, loading }: Props) {
   return (
     <FlatList
       data={dofusList}
@@ -41,7 +42,7 @@ export function DofusGrid({ dofusList, progressMap, refreshing, onRefresh }: Pro
       numColumns={2}
       ListHeaderComponent={<GlobalProgress dofusList={dofusList} progressMap={progressMap} />}
       renderItem={({ item }) => (
-        <DofusCard dofus={item} progress={progressMap.get(item.id) ?? null} />
+        <DofusCard dofus={item} progress={progressMap.get(item.id) ?? null} loading={loading} />
       )}
       refreshControl={
         <RefreshControl
