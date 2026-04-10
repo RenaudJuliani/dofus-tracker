@@ -14,8 +14,8 @@ vi.mock("@/lib/stores/characterStore", () => ({
 }));
 
 const characters: Character[] = [
-  { id: "c1", user_id: "u1", name: "Tougli", character_class: "Cra", created_at: "2024-01-01" },
-  { id: "c2", user_id: "u1", name: "MonIop", character_class: "Iop", created_at: "2024-01-02" },
+  { id: "c1", user_id: "u1", name: "Tougli", character_class: "Cra", gender: "m" as const, created_at: "2024-01-01" },
+  { id: "c2", user_id: "u1", name: "MonIop", character_class: "Iop", gender: "m" as const, created_at: "2024-01-02" },
 ];
 
 const { CharacterSelector } = await import("@/components/nav/CharacterSelector");

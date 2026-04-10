@@ -53,6 +53,7 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
   const [selectedAlignment, setSelectedAlignment] = useState<Alignment | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<AlignmentOrder | null>(null);
   const [selectedJob, setSelectedJob] = useState<JobVariant | null>(null);
+  const [questFilter, setQuestFilter] = useState("");
 
   // Load persisted alignment from localStorage
   useEffect(() => {
@@ -193,6 +194,17 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
     return aMin - bMin;
   });
 
+  const displayedGroups = questFilter.trim()
+    ? allGroups
+        .map((g) => ({
+          ...g,
+          quests: g.quests.filter((q) =>
+            q.name.toLowerCase().includes(questFilter.toLowerCase())
+          ),
+        }))
+        .filter((g) => g.quests.length > 0)
+    : allGroups;
+
   // Orders available for current alignment selection
   const availableOrders: AlignmentOrder[] =
     selectedAlignment === "bontarien" ? BONTA_ORDERS :
@@ -322,11 +334,31 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
             </div>
           )}
 
+          {/* Quest filter */}
+          <div className="relative">
+            <input
+              type="text"
+              value={questFilter}
+              onChange={(e) => setQuestFilter(e.target.value)}
+              placeholder="Filtrer les quêtes…"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 pl-9 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-dofus-green/40 transition-colors"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
+            {questFilter && (
+              <button
+                onClick={() => setQuestFilter("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-sm"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
           {loading ? (
             <p className="text-gray-400 text-sm animate-pulse">Chargement des quêtes…</p>
           ) : (
             <>
-              {allGroups.map(({ title, quests: groupQuests }) => (
+              {displayedGroups.map(({ title, quests: groupQuests }) => (
                 <QuestSection
                   key={title}
                   title={title}

@@ -22,6 +22,7 @@ const questBase: QuestWithChain = {
     alignment: null,
     alignment_order: null,
     job_variant: null,
+    note: null,
   },
   is_completed: false,
   shared_dofus_ids: [],

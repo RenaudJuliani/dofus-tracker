@@ -26,7 +26,7 @@ vi.mock("@/lib/stores/characterStore", () => ({
 }));
 
 const character: Character = {
-  id: "c1", user_id: "u1", name: "Tougli", character_class: "Cra", created_at: "2024-01-01",
+  id: "c1", user_id: "u1", name: "Tougli", character_class: "Cra", gender: "m" as const, created_at: "2024-01-01",
 };
 
 const dofusList: Dofus[] = [
