@@ -14,7 +14,7 @@ const { data: dofusWithJob } = await client
 
 const byDofus = new Map<string, { name: string; paysan: number; alchimiste: number }>();
 for (const row of dofusWithJob ?? []) {
-  const name = (row.dofus as { name: string }).name;
+  const name = (row.dofus as unknown as { name: string }).name;
   const key = row.dofus_id as string;
   if (!byDofus.has(key)) byDofus.set(key, { name, paysan: 0, alchimiste: 0 });
   const entry = byDofus.get(key)!;
@@ -37,7 +37,7 @@ const { data: ddgQuests } = await client
 
 console.log("\n=== DDG — quêtes job_variant (ordre index) ===");
 for (const q of ddgQuests ?? []) {
-  const questName = (q.quests as { name: string }).name;
+  const questName = (q.quests as unknown as { name: string }).name;
   console.log(`  [${q.order_index}] ${q.job_variant.padEnd(12)} | ${q.sub_section ?? "—"} | ${questName}`);
 }
 
