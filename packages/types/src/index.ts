@@ -143,3 +143,45 @@ export interface DofusDetail extends Dofus {
   resources: AggregatedResource[];
   progress: QuestProgressCounts;
 }
+
+// ─── Achievements ────────────────────────────────────────────────────────────
+
+export interface Achievement {
+  id: number;
+  name: string;
+  description: string;
+  points: number;
+  level_required: number;
+  subcategory_id: number;
+  subcategory_name: string;
+  order_index: number;
+}
+
+export interface AchievementObjective {
+  id: string;
+  achievement_id: number;
+  order_index: number;
+  description: string;
+  quest_id: string | null;
+}
+
+export type CompletionSource = "auto" | "manual";
+
+export interface AchievementObjectiveWithStatus extends AchievementObjective {
+  is_completed: boolean;
+  completion_source: CompletionSource | null;
+}
+
+export interface AchievementWithProgress extends Achievement {
+  objectives: AchievementObjectiveWithStatus[];
+  completed_count: number;
+  total_count: number;
+}
+
+export interface AchievementSubcategory {
+  subcategory_id: number;
+  subcategory_name: string;
+  completed_achievements: number;
+  total_achievements: number;
+  earned_points: number;
+}
