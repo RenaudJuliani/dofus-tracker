@@ -5,10 +5,12 @@ import { notFound, redirect } from "next/navigation";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ highlight?: string }>;
 }
 
-export default async function DofusDetailPage({ params }: Props) {
+export default async function DofusDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { highlight } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -28,6 +30,7 @@ export default async function DofusDetailPage({ params }: Props) {
       dofus={dofus}
       allDofus={allDofus}
       userId={user.id}
+      highlight={highlight ?? null}
     />
   );
 }

@@ -125,3 +125,13 @@ body {
 .animate-glow {
   animation: glow-pulse 3s ease-in-out infinite;
 }
+
+@keyframes highlight-fade {
+  0%   { box-shadow: 0 0 0 2px var(--tw-ring-color, #4ade80); }
+  70%  { box-shadow: 0 0 0 2px var(--tw-ring-color, #4ade80); }
+  100% { box-shadow: none; }
+}
+
+.animate-highlight-fade {
+  animation: highlight-fade 2s ease-out forwards;
+}

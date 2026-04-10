@@ -9,6 +9,7 @@ interface Props {
   quests: QuestWithChain[];
   dofusColor: string;
   note?: string;
+  highlightSlug?: string | null;
   onToggle: (questId: string, completed: boolean) => void;
   onBulkComplete: () => void;
   onBulkUncomplete: () => void;
@@ -36,7 +37,7 @@ function groupQuests(quests: QuestWithChain[]): Array<QuestWithChain | QuestWith
   return result;
 }
 
-export function QuestSection({ title, quests, dofusColor, note, onToggle, onBulkComplete, onBulkUncomplete }: Props) {
+export function QuestSection({ title, quests, dofusColor, note, highlightSlug, onToggle, onBulkComplete, onBulkUncomplete }: Props) {
   const [expanded, setExpanded] = useState(true);
   const completedCount = quests.filter((q) => q.is_completed).length;
   const allCompleted = completedCount === quests.length;
@@ -94,6 +95,7 @@ export function QuestSection({ title, quests, dofusColor, note, onToggle, onBulk
                     quest={quest}
                     dofusColor={dofusColor}
                     onToggle={onToggle}
+                    highlighted={highlightSlug === quest.slug}
                   />
                 ))}
               </div>
@@ -105,6 +107,7 @@ export function QuestSection({ title, quests, dofusColor, note, onToggle, onBulk
               quest={item}
               dofusColor={dofusColor}
               onToggle={onToggle}
+              highlighted={highlightSlug === item.slug}
             />
           );
         })}

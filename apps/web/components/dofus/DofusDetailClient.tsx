@@ -42,9 +42,10 @@ interface Props {
   dofus: Dofus;
   allDofus: Dofus[];
   userId: string;
+  highlight: string | null;
 }
 
-export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
+export function DofusDetailClient({ dofus, allDofus, userId: _userId, highlight }: Props) {
   const supabase = useSupabase();
   const activeCharacterId = useCharacterStore((s) => s.activeCharacterId);
 
@@ -80,6 +81,14 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
       .then(setQuests)
       .finally(() => setLoading(false));
   }, [supabase, dofus.id, activeCharacterId]);
+
+  useEffect(() => {
+    if (!highlight || loading) return;
+    const el = document.querySelector(`[data-quest-slug="${highlight}"]`);
+    if (el) {
+      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+    }
+  }, [highlight, loading]);
 
   function handleAlignmentChange(alignment: Alignment | null) {
     setSelectedAlignment(alignment);
@@ -365,6 +374,7 @@ export function DofusDetailClient({ dofus, allDofus, userId: _userId }: Props) {
                   quests={groupQuests}
                   dofusColor={dofus.color}
                   note={SECTION_NOTES[dofus.slug]?.[title]}
+                  highlightSlug={highlight}
                   onToggle={handleToggle}
                   onBulkComplete={() => handleBulkComplete(groupQuests.map((q) => q.id))}
                   onBulkUncomplete={() => handleBulkUncomplete(groupQuests.map((q) => q.id))}

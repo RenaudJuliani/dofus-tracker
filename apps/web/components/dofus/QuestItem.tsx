@@ -17,9 +17,10 @@ interface Props {
   quest: QuestWithChain;
   dofusColor: string;
   onToggle: (questId: string, completed: boolean) => void;
+  highlighted?: boolean;
 }
 
-export function QuestItem({ quest, dofusColor, onToggle }: Props) {
+export function QuestItem({ quest, dofusColor, onToggle, highlighted = false }: Props) {
   const { chain, is_completed, shared_dofus_ids, resources } = quest;
   const [resourcesExpanded, setResourcesExpanded] = useState(false);
   const [copiedResource, setCopiedResource] = useState<string | null>(null);
@@ -34,9 +35,11 @@ export function QuestItem({ quest, dofusColor, onToggle }: Props) {
 
   return (
     <div
-      className={`rounded-xl transition-colors ${is_completed ? "opacity-60" : ""}`}
+      data-quest-slug={quest.slug}
+      className={`rounded-xl transition-all ${is_completed ? "opacity-60" : ""} ${highlighted ? "ring-2 ring-offset-1 ring-offset-dofus-dark animate-highlight-fade" : ""}`}
       style={{
         background: is_completed ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.04)",
+        ...(highlighted ? { "--tw-ring-color": dofusColor } as React.CSSProperties : {}),
       }}
     >
       {/* Main row */}
