@@ -34,11 +34,10 @@ CREATE TABLE achievement_objective_completions (
   UNIQUE(character_id, objective_id)
 );
 
-CREATE INDEX ON achievement_objective_completions(character_id);
-
 -- achievements et achievement_objectives sont en lecture publique (comme quests)
 -- Writes uniquement via service role key (sync script)
 
+-- achievements and achievement_objectives have no RLS intentionally: public read, service role writes only
 -- achievement_objective_completions : scoped au user via characters
 ALTER TABLE achievement_objective_completions ENABLE ROW LEVEL SECURITY;
 
