@@ -10,7 +10,7 @@ const RAW_PAIRS: Array<{ dofusSlug: string; pairs: JobVariantPair[] }> = [
   {
     dofusSlug: "dofus-des-glaces",
     pairs: [
-      { alchimiste: "Cent vingt trois fleus",                 paysan: "En semant, se ment" },
+      { alchimiste: "Cent vingt trois fleurs",                paysan: "En semant, se ment" },
       { alchimiste: "Botanique-nique-nique",                  paysan: "Pomdeupin vaut mieux que trois tu l'auras" },
       { alchimiste: "A fleur de peau",                        paysan: "Massacre au hakapik" },
       { alchimiste: "Mes lys fleurs",                         paysan: "Mettre son grain de sel" },
