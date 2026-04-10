@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "../client.js";
-import type { QuestWithChain, QuestSection, QuestResource, AggregatedResource, Alignment, AlignmentOrder, JobVariant } from "@dofus-tracker/types";
+import type { QuestWithChain, QuestSection, QuestResource, AggregatedResource, Alignment, AlignmentOrder, JobVariant, QuestSearchResult } from "@dofus-tracker/types";
 
 export async function getQuestsForDofus(
   client: SupabaseClient,
@@ -160,4 +160,51 @@ export async function getAggregatedResourcesForDofus(
   }
 
   return Array.from(map.values());
+}
+
+export async function searchQuests(
+  client: SupabaseClient,
+  query: string
+): Promise<QuestSearchResult[]> {
+  const { data: quests, error: questError } = await client
+    .from("quests")
+    .select("id, name, slug")
+    .ilike("name", `%${query}%`)
+    .limit(40);
+
+  if (questError) throw questError;
+  if (!quests || quests.length === 0) return [];
+
+  const questIds = quests.map((q: { id: string }) => q.id);
+
+  const { data: chains, error: chainError } = await client
+    .from("dofus_quest_chains")
+    .select("quest_id, sub_section, dofus:dofus_id(id, name, slug, color, image_url)")
+    .in("quest_id", questIds);
+
+  if (chainError) throw chainError;
+
+  const questMap = new Map(
+    quests.map((q: { id: string; name: string; slug: string }) => [q.id, q])
+  );
+
+  const results: QuestSearchResult[] = [];
+  for (const chain of chains ?? []) {
+    const quest = questMap.get(chain.quest_id) as { id: string; name: string; slug: string } | undefined;
+    if (!quest || !chain.dofus) continue;
+    const d = (chain.dofus as unknown) as { id: string; name: string; slug: string; color: string; image_url: string | null };
+    results.push({
+      quest_id: quest.id,
+      quest_name: quest.name,
+      quest_slug: quest.slug,
+      sub_section: chain.sub_section ?? null,
+      dofus_id: d.id,
+      dofus_name: d.name,
+      dofus_slug: d.slug,
+      dofus_color: d.color,
+      dofus_image_url: d.image_url,
+    });
+  }
+
+  return results;
 }

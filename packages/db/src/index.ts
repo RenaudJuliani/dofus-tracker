@@ -22,4 +22,5 @@ export {
   bulkCompleteSection,
   bulkUncompleteSection,
   getAggregatedResourcesForDofus,
+  searchQuests,
 } from "./queries/quests.js";
