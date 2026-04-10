@@ -5,9 +5,10 @@ import type { Dofus, DofusProgress } from "@dofus-tracker/types";
 interface Props {
   dofus: Dofus;
   progress: DofusProgress | null;
+  loading?: boolean;
 }
 
-export function DofusCard({ dofus, progress }: Props) {
+export function DofusCard({ dofus, progress, loading }: Props) {
   const pct = Math.min(100, progress?.progress_pct ?? 0);
   const completed = progress?.completed_quests ?? 0;
   const total = progress?.total_quests ?? 0;
@@ -45,21 +46,30 @@ export function DofusCard({ dofus, progress }: Props) {
 
         {/* Progress */}
         <div className="mt-auto">
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-xs text-gray-400">{completed} / {total} quêtes</span>
-            <span className="text-sm font-bold" style={{ color: dofus.color }}>
-              {pct}%
-            </span>
-          </div>
-          <div className="progress-bar-track">
-            <div
-              className="progress-bar-fill"
-              style={{
-                width: `${pct}%`,
-                background: `linear-gradient(90deg, ${dofus.color}aa, ${dofus.color})`,
-              }}
-            />
-          </div>
+          {loading ? (
+            <div className="animate-pulse space-y-1.5">
+              <div className="h-3 bg-white/10 rounded w-3/4" />
+              <div className="h-1.5 bg-white/10 rounded" />
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-xs text-gray-400">{completed} / {total} quêtes</span>
+                <span className="text-sm font-bold" style={{ color: dofus.color }}>
+                  {pct}%
+                </span>
+              </div>
+              <div className="progress-bar-track">
+                <div
+                  className="progress-bar-fill"
+                  style={{
+                    width: `${pct}%`,
+                    background: `linear-gradient(90deg, ${dofus.color}aa, ${dofus.color})`,
+                  }}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </Link>

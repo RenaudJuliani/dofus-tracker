@@ -16,15 +16,25 @@ export function DofusGrid({ dofusList }: Props) {
   const supabase = useSupabase();
   const activeCharacterId = useCharacterStore((s) => s.activeCharacterId);
   const [progressMap, setProgressMap] = useState<Map<string, DofusProgress>>(new Map());
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [hydrated, setHydrated] = useState(() => useCharacterStore.persist.hasHydrated());
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [searchResults, setSearchResults] = useState<QuestSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
 
+  // Wait for Zustand to rehydrate from localStorage before fetching progress.
+  // Without this, activeCharacterId is null on the first render even when a
+  // character is stored — causing the cards to flash "0 / 0 quêtes".
+  useEffect(() => {
+    if (hydrated) return;
+    return useCharacterStore.persist.onFinishHydration(() => setHydrated(true));
+  }, [hydrated]);
+
   const loadProgress = useCallback(async () => {
     if (!activeCharacterId) {
       setProgressMap(new Map());
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -36,7 +46,9 @@ export function DofusGrid({ dofusList }: Props) {
     }
   }, [supabase, activeCharacterId]);
 
-  useEffect(() => { loadProgress(); }, [loadProgress]);
+  useEffect(() => {
+    if (hydrated) loadProgress();
+  }, [loadProgress, hydrated]);
 
   // Debounce query
   useEffect(() => {
@@ -84,11 +96,6 @@ export function DofusGrid({ dofusList }: Props) {
         <QuestSearchResults results={searchResults} query={debouncedQuery} loading={searching} />
       ) : (
         <div className="space-y-10">
-          {loading && (
-            <p className="text-center text-gray-400 text-sm animate-pulse">
-              Chargement de la progression…
-            </p>
-          )}
           {[
             { label: "Primordiaux", list: primordial },
             { label: "Secondaires", list: secondaire },
@@ -105,6 +112,7 @@ export function DofusGrid({ dofusList }: Props) {
                       key={dofus.id}
                       dofus={dofus}
                       progress={progressMap.get(dofus.id) ?? null}
+                      loading={loading}
                     />
                   ))}
                 </div>
