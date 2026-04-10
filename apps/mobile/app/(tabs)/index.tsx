@@ -1,14 +1,15 @@
-import { useState, useCallback } from "react";
-import { View, Text } from "react-native";
+import { useState, useCallback, useEffect } from "react";
+import { View, Text, TextInput } from "react-native";
 import { Stack, useFocusEffect } from "expo-router";
-import { getDofusList, getDofusProgressForCharacter, getCharacters, getQuestsForDofus } from "@dofus-tracker/db";
+import { getDofusList, getDofusProgressForCharacter, getCharacters, getQuestsForDofus, searchQuests } from "@dofus-tracker/db";
 import { DofusGrid } from "@/components/home/DofusGrid";
+import { QuestSearchResults } from "@/components/home/QuestSearchResults";
 import { CharacterSelector } from "@/components/shared/CharacterSelector";
 import { supabase } from "@/lib/supabase";
 import { useCharacterStore } from "@/lib/stores/characterStore";
 import { readCache, writeCache, CACHE_KEYS } from "@/lib/cache";
 import { useToast } from "@/lib/ToastContext";
-import type { Dofus, DofusProgress, Character } from "@dofus-tracker/types";
+import type { Dofus, DofusProgress, Character, QuestSearchResult } from "@dofus-tracker/types";
 
 const TTL_24H = 1000 * 60 * 60 * 24;
 
@@ -18,6 +19,10 @@ export default function MesDofusScreen() {
   const [progressMap, setProgressMap] = useState<Map<string, DofusProgress>>(new Map());
   const [characters, setCharacters] = useState<Character[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<QuestSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
   const { show } = useToast();
 
   const preCacheQuests = useCallback(async (dofus: Dofus[], characterId: string) => {
@@ -78,6 +83,20 @@ export default function MesDofusScreen() {
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  useEffect(() => {
+    if (debouncedQuery.length < 2) { setSearchResults([]); return; }
+    setSearching(true);
+    searchQuests(supabase, debouncedQuery)
+      .then(setSearchResults)
+      .catch(() => setSearchResults([]))
+      .finally(() => setSearching(false));
+  }, [debouncedQuery]);
+
   return (
     <View className="flex-1 bg-dofus-dark">
       <Stack.Screen
@@ -86,7 +105,23 @@ export default function MesDofusScreen() {
           headerRight: () => <CharacterSelector characters={characters} />,
         }}
       />
-      {dofusList.length === 0 ? (
+      {/* Search bar */}
+      <View className="mx-4 mt-3 mb-1 flex-row items-center bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+        <Text className="text-gray-500 mr-2">🔍</Text>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Rechercher une quête…"
+          placeholderTextColor="#6b7280"
+          className="flex-1 text-sm text-white"
+          returnKeyType="search"
+          clearButtonMode="while-editing"
+        />
+      </View>
+
+      {query.length >= 2 ? (
+        <QuestSearchResults results={searchResults} query={debouncedQuery} loading={searching} />
+      ) : dofusList.length === 0 ? (
         <View className="flex-1 items-center justify-center">
           <Text className="text-gray-400">Chargement…</Text>
         </View>

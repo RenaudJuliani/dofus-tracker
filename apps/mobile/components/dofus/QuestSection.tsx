@@ -11,12 +11,13 @@ interface Props {
   quests: QuestWithChain[];
   dofusColor: string;
   note?: string;
+  highlightSlug?: string | null;
   onToggle: (questId: string, completed: boolean) => void;
   onBulkComplete: () => void;
   onBulkUncomplete: () => void;
 }
 
-export function QuestSection({ title, quests, dofusColor, note, onToggle, onBulkComplete, onBulkUncomplete }: Props) {
+export function QuestSection({ title, quests, dofusColor, note, highlightSlug, onToggle, onBulkComplete, onBulkUncomplete }: Props) {
   const [expanded, setExpanded] = useState(true);
   const completedCount = quests.filter((q) => q.is_completed).length;
   const allCompleted = completedCount === quests.length;
@@ -33,13 +34,13 @@ export function QuestSection({ title, quests, dofusColor, note, onToggle, onBulk
       rendered.push(
         <QuestGroupBox key={gid} note={groupNote}>
           {group.map((q) => (
-            <QuestItem key={q.id} quest={q} dofusColor={dofusColor} onToggle={onToggle} />
+            <QuestItem key={q.id} quest={q} dofusColor={dofusColor} onToggle={onToggle} highlighted={highlightSlug === q.slug} />
           ))}
         </QuestGroupBox>
       );
     } else if (!gid) {
       rendered.push(
-        <QuestItem key={quest.id} quest={quest} dofusColor={dofusColor} onToggle={onToggle} />
+        <QuestItem key={quest.id} quest={quest} dofusColor={dofusColor} onToggle={onToggle} highlighted={highlightSlug === quest.slug} />
       );
     }
   }

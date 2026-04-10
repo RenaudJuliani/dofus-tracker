@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { ScrollView, View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { ScrollView, View, Text, TouchableOpacity, ActivityIndicator, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -55,7 +55,7 @@ function isNetworkError(err: unknown): boolean {
 }
 
 export default function DofusDetailScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { slug, highlight } = useLocalSearchParams<{ slug: string; highlight?: string }>();
   const activeCharacterId = useCharacterStore((s) => s.activeCharacterId);
   const bottomSheetRef = useRef<BottomSheetHandle>(null);
   const { top } = useSafeAreaInsets();
@@ -68,6 +68,7 @@ export default function DofusDetailScreen() {
   const [selectedAlignment, setSelectedAlignment] = useState<Alignment | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<AlignmentOrder | null>(null);
   const [selectedJob, setSelectedJob] = useState<JobVariant | null>(null);
+  const [questFilter, setQuestFilter] = useState("");
 
   const { handleBulkComplete, handleBulkUncomplete } = useQuestToggle({
     supabase,
@@ -253,6 +254,18 @@ export default function DofusDetailScreen() {
     else mainQuestGroups.push({ title, quests: [quest] });
   }
 
+  const filteredPrerequisiteGroups = questFilter.trim()
+    ? prerequisiteGroups
+        .map((g) => ({ ...g, quests: g.quests.filter((q) => q.name.toLowerCase().includes(questFilter.toLowerCase())) }))
+        .filter((g) => g.quests.length > 0)
+    : prerequisiteGroups;
+
+  const filteredMainQuestGroups = questFilter.trim()
+    ? mainQuestGroups
+        .map((g) => ({ ...g, quests: g.quests.filter((q) => q.name.toLowerCase().includes(questFilter.toLowerCase())) }))
+        .filter((g) => g.quests.length > 0)
+    : mainQuestGroups;
+
   const availableOrders: AlignmentOrder[] =
     selectedAlignment === "bontarien" ? BONTA_ORDERS :
     selectedAlignment === "brakmarien" ? BRAKMAR_ORDERS : [];
@@ -359,7 +372,21 @@ export default function DofusDetailScreen() {
           </View>
         )}
 
-        {prerequisiteGroups.map(({ title, quests: groupQuests }) => (
+        {/* Quest filter */}
+        <View className="flex-row items-center bg-white/5 border border-white/10 rounded-xl px-3 py-2 mb-2">
+          <Text className="text-gray-500 mr-2">🔍</Text>
+          <TextInput
+            value={questFilter}
+            onChangeText={setQuestFilter}
+            placeholder="Filtrer les quêtes…"
+            placeholderTextColor="#6b7280"
+            className="flex-1 text-sm text-white"
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+          />
+        </View>
+
+        {filteredPrerequisiteGroups.map(({ title, quests: groupQuests }) => (
           <QuestSection
             key={title}
             title={title}
@@ -368,17 +395,19 @@ export default function DofusDetailScreen() {
             note={dofus.slug === "dofus-cauchemar" && title === "Prérequis - La fin"
               ? 'Lancez la quête "Les quatre volontés" qui vous demande de faire les quatre donjons de l\'éliocalypse. Une fois les quatre donjons terminés, vous pouvez valider la quête.'
               : undefined}
+            highlightSlug={highlight ?? null}
             onToggle={offlineHandleToggle}
             onBulkComplete={() => handleBulkComplete(groupQuests.map((q) => q.id))}
             onBulkUncomplete={() => handleBulkUncomplete(groupQuests.map((q) => q.id))}
           />
         ))}
-        {mainQuestGroups.map(({ title, quests: groupQuests }) => (
+        {filteredMainQuestGroups.map(({ title, quests: groupQuests }) => (
           <QuestSection
             key={title}
             title={title}
             quests={groupQuests}
             dofusColor={dofus.color}
+            highlightSlug={highlight ?? null}
             onToggle={offlineHandleToggle}
             onBulkComplete={() => handleBulkComplete(groupQuests.map((q) => q.id))}
             onBulkUncomplete={() => handleBulkUncomplete(groupQuests.map((q) => q.id))}
