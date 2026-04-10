@@ -24,6 +24,7 @@ export default function ProfileScreen() {
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [characterClass, setCharacterClass] = useState("");
+  const [gender, setGender] = useState<"m" | "f">("m");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,11 +42,12 @@ export default function ProfileScreen() {
     setLoading(true);
     setError(null);
     try {
-      const newChar = await createCharacter(supabase, userId, name.trim(), characterClass.trim());
+      const newChar = await createCharacter(supabase, userId, name.trim(), characterClass.trim(), gender);
       setCharacters((prev) => [...prev, newChar]);
       if (characters.length === 0) setActiveCharacterId(newChar.id);
       setName("");
       setCharacterClass("");
+      setGender("m");
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -150,12 +152,26 @@ export default function ProfileScreen() {
               onChangeText={setName}
             />
             <TextInput
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white mb-4"
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white mb-3"
               placeholder={`Classe (ex: ${DOFUS_CLASSES.slice(0, 3).join(", ")}...)`}
               placeholderTextColor="#6b7280"
               value={characterClass}
               onChangeText={setCharacterClass}
             />
+            <View className="flex-row gap-2 mb-4">
+              <TouchableOpacity
+                onPress={() => setGender("m")}
+                className={`flex-1 py-2.5 rounded-xl items-center border ${gender === "m" ? "bg-dofus-green border-dofus-green" : "bg-white/5 border-white/10"}`}
+              >
+                <Text className={`text-sm font-semibold ${gender === "m" ? "text-black" : "text-gray-400"}`}>Masculin</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setGender("f")}
+                className={`flex-1 py-2.5 rounded-xl items-center border ${gender === "f" ? "bg-dofus-green border-dofus-green" : "bg-white/5 border-white/10"}`}
+              >
+                <Text className={`text-sm font-semibold ${gender === "f" ? "text-black" : "text-gray-400"}`}>Féminin</Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               onPress={handleCreate}
               disabled={loading}
