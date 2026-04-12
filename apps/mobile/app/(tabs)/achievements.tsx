@@ -18,7 +18,10 @@ export default function AchievementsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (!activeCharacterId) return;
+      if (!activeCharacterId) {
+        setLoading(false);
+        return;
+      }
 
       async function load() {
         const cacheKey = CACHE_KEYS.achievementSubcategories(activeCharacterId!);
