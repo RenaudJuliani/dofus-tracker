@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
@@ -39,7 +40,7 @@ interface DofusDBSubcategory {
   count: number;
 }
 
-interface DofusDBData {
+export interface DofusDBData {
   subcategories: DofusDBSubcategory[];
   total_achievements: number;
 }
@@ -55,7 +56,7 @@ interface SyncReport {
 }
 
 export async function syncAchievements(
-  client: ReturnType<typeof createClient>,
+  client: SupabaseClient,
   data: DofusDBData
 ): Promise<SyncReport> {
   const report: SyncReport = {
@@ -113,12 +114,12 @@ export async function syncAchievements(
       // Récupérer les quest_id déjà matchés pour ne pas les écraser
       const { data: existing } = await client
         .from("achievement_objectives")
-        .select("id, description, quest_id")
+        .select("description, quest_id")
         .eq("achievement_id", a.id);
 
-      const existingMap = new Map<string, { id: string; quest_id: string | null }>();
+      const existingMap = new Map<string, { quest_id: string | null }>();
       for (const e of existing ?? []) {
-        existingMap.set(normalizeQuestName(e.description), { id: e.id, quest_id: e.quest_id });
+        existingMap.set(normalizeQuestName(e.description), { quest_id: e.quest_id });
       }
 
       const objectiveRows = a.objectives.map((o) => {
@@ -135,7 +136,6 @@ export async function syncAchievements(
         }
 
         return {
-          ...(existingEntry?.id ? { id: existingEntry.id } : {}),
           achievement_id: a.id,
           order_index: o.order,
           description: o.description,
@@ -145,7 +145,7 @@ export async function syncAchievements(
 
       const { error: objError } = await client
         .from("achievement_objectives")
-        .upsert(objectiveRows, { onConflict: "id", ignoreDuplicates: false });
+        .upsert(objectiveRows, { onConflict: "achievement_id,order_index", ignoreDuplicates: false });
 
       if (objError) {
         report.errors.push(`Objectives upsert failed for achievement ${a.id}: ${objError.message}`);

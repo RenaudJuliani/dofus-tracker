@@ -22,6 +22,8 @@ CREATE TABLE achievement_objectives (
   quest_id       uuid REFERENCES quests(id) ON DELETE SET NULL
 );
 
+ALTER TABLE achievement_objectives ADD CONSTRAINT achievement_objectives_achievement_id_order_index_key UNIQUE (achievement_id, order_index);
+
 CREATE INDEX ON achievement_objectives(achievement_id);
 CREATE INDEX ON achievement_objectives(quest_id) WHERE quest_id IS NOT NULL;
 
