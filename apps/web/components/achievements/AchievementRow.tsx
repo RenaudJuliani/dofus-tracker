@@ -30,10 +30,12 @@ function ObjectiveCheckbox({ obj, onToggle }: {
 
   return (
     <div
-      role="checkbox"
-      aria-checked={obj.is_completed}
+      role={isAuto ? "img" : "checkbox"}
       aria-label={obj.description}
-      onClick={handleClick}
+      aria-checked={!isAuto ? obj.is_completed : undefined}
+      tabIndex={isClickable ? 0 : -1}
+      onClick={isClickable ? handleClick : undefined}
+      onKeyDown={isClickable ? (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); handleClick(); } } : undefined}
       className={`flex items-center gap-2 py-1.5 text-sm ${isClickable ? "cursor-pointer" : "cursor-default"}`}
     >
       <span
@@ -67,6 +69,7 @@ export function AchievementRow({ achievement, onToggleObjective }: Props) {
       {/* Header row */}
       <button
         aria-label={achievement.name}
+        aria-expanded={expanded}
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-800/50 transition-colors"
       >
