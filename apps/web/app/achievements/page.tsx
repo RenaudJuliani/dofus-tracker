@@ -27,7 +27,7 @@ export default async function AchievementsPage({ searchParams }: Props) {
 
   const subcategories = await getAchievementSubcategories(supabase, defaultCharacterId);
 
-  const initialCatId = cat ? parseInt(cat, 10) : (subcategories[0]?.subcategory_id ?? null);
+  const initialCatId = cat ? (parseInt(cat, 10) || null) : (subcategories[0]?.subcategory_id ?? null);
   const initialAchievements = initialCatId
     ? await getAchievementsForCharacter(supabase, initialCatId, defaultCharacterId)
     : [];

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCharacterStore } from "@/lib/stores/characterStore";
 import { useSupabase } from "@/app/providers";
 import {
@@ -21,7 +21,6 @@ interface Props {
 export function AchievementsClient({ subcategories: initialSubcats, initialAchievements, initialCatId }: Props) {
   const supabase = useSupabase();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const activeCharacterId = useCharacterStore((s) => s.activeCharacterId);
 
   const [subcategories, setSubcategories] = useState<AchievementSubcategory[]>(initialSubcats);
@@ -30,35 +29,39 @@ export function AchievementsClient({ subcategories: initialSubcats, initialAchie
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
-  // Recharger quand le personnage actif change
   useEffect(() => {
-    if (!activeCharacterId) return;
+    if (!activeCharacterId) {
+      setAchievements([]);
+      setLoading(false);
+      return;
+    }
+    if (selectedCatId) {
+      const params = new URLSearchParams(window.location.search);
+      params.set("cat", String(selectedCatId));
+      router.replace(`/achievements?${params.toString()}`, { scroll: false });
+    }
+    setLoading(true);
     Promise.all([
       getAchievementSubcategories(supabase, activeCharacterId),
       selectedCatId
         ? getAchievementsForCharacter(supabase, selectedCatId, activeCharacterId)
         : Promise.resolve([]),
-    ]).then(([subcats, achs]) => {
-      setSubcategories(subcats);
-      setAchievements(achs);
-    });
-  }, [activeCharacterId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Charger les succès quand la catégorie change
-  useEffect(() => {
-    if (!selectedCatId || !activeCharacterId) return;
-    setLoading(true);
-    getAchievementsForCharacter(supabase, selectedCatId, activeCharacterId)
-      .then(setAchievements)
+    ])
+      .then(([subcats, achs]) => {
+        setSubcategories(subcats);
+        setAchievements(achs);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("cat", String(selectedCatId));
-    router.replace(`/achievements?${params.toString()}`, { scroll: false });
-  }, [selectedCatId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [supabase, activeCharacterId, selectedCatId]);
 
   async function handleToggleObjective(objectiveId: string, questId: string | null, completed: boolean) {
     if (!activeCharacterId) return;
+
+    // Capture original state for rollback
+    const prevAchievements = achievements;
+    const prevSubcategories = subcategories;
+
     // Optimistic update
     setAchievements((prev) =>
       prev.map((a) => ({
@@ -81,24 +84,16 @@ export function AchievementsClient({ subcategories: initialSubcats, initialAchie
         ).length,
       }))
     );
+
     try {
       await toggleObjectiveCompletion(supabase, activeCharacterId, objectiveId, questId, completed);
       const updatedSubcats = await getAchievementSubcategories(supabase, activeCharacterId);
       setSubcategories(updatedSubcats);
     } catch (err) {
       console.error(err);
-      // Rollback
-      setAchievements((prev) =>
-        prev.map((a) => ({
-          ...a,
-          objectives: a.objectives.map((o) =>
-            o.id === objectiveId ? { ...o, is_completed: !completed, completion_source: !completed ? (questId ? ("auto" as const) : ("manual" as const)) : null } : o
-          ),
-          completed_count: a.objectives.filter((o) =>
-            o.id === objectiveId ? !completed : o.is_completed
-          ).length,
-        }))
-      );
+      // Rollback to original state (both achievements and subcategories)
+      setAchievements(prevAchievements);
+      setSubcategories(prevSubcategories);
     }
   }
 
