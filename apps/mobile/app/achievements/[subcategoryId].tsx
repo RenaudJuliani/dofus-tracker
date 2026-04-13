@@ -77,7 +77,7 @@ export default function AchievementListScreen() {
         ...a,
         objectives: a.objectives.map((o) =>
           o.id === objectiveId
-            ? { ...o, is_completed: completed, completion_source: completed ? ("manual" as const) : null }
+            ? { ...o, is_completed: completed, completion_source: completed ? (questId ? ("auto" as const) : ("manual" as const)) : null }
             : o
         ),
         completed_count: a.objectives.filter((o) => (o.id === objectiveId ? completed : o.is_completed)).length,

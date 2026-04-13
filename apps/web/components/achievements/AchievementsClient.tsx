@@ -23,13 +23,21 @@ export function AchievementsClient({ subcategories: initialSubcats, initialAchie
   const router = useRouter();
   const activeCharacterId = useCharacterStore((s) => s.activeCharacterId);
 
+  const [hydrated, setHydrated] = useState(() => useCharacterStore.persist.hasHydrated());
   const [subcategories, setSubcategories] = useState<AchievementSubcategory[]>(initialSubcats);
   const [achievements, setAchievements] = useState<AchievementWithProgress[]>(initialAchievements);
   const [selectedCatId, setSelectedCatId] = useState<number | null>(initialCatId);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
+  // Wait for Zustand to rehydrate from localStorage before fetching data.
   useEffect(() => {
+    if (hydrated) return;
+    return useCharacterStore.persist.onFinishHydration(() => setHydrated(true));
+  }, [hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
     if (!activeCharacterId) {
       setAchievements([]);
       setLoading(false);
@@ -53,7 +61,7 @@ export function AchievementsClient({ subcategories: initialSubcats, initialAchie
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [supabase, activeCharacterId, selectedCatId]);
+  }, [supabase, hydrated, activeCharacterId, selectedCatId]);
 
   async function handleToggleObjective(objectiveId: string, questId: string | null, completed: boolean) {
     if (!activeCharacterId) return;
