@@ -8,6 +8,7 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "sync": "pnpm --filter @dofus-tracker/sync run start",
+    "sync:achievements": "pnpm --filter @dofus-tracker/sync run sync-achievements",
     "postinstall": "pnpm --filter @dofus-tracker/types build && pnpm --filter @dofus-tracker/db build"
   },
   "devDependencies": {

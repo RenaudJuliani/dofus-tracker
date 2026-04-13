@@ -5,6 +5,8 @@ const CACHE_KEYS = {
   dofusBySlug: (slug: string) => `cache:dofus:detail:${slug}`,
   dofusQuests: (slug: string) => `cache:dofus:quests:${slug}`,
   dofusProgress: (characterId: string) => `cache:dofus:progress:${characterId}`,
+  achievementSubcategories: (characterId: string) => `cache:achievements:subcategories:${characterId}`,
+  achievements: (subcategoryId: number, characterId: string) => `cache:achievements:${subcategoryId}:${characterId}`,
 } as const;
 
 export { CACHE_KEYS };

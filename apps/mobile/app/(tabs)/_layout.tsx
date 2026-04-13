@@ -43,6 +43,13 @@ function TabsWithToast() {
             tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>👤</Text>,
           }}
         />
+        <Tabs.Screen
+          name="achievements"
+          options={{
+            title: "Succès",
+            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>🏆</Text>,
+          }}
+        />
       </Tabs>
       <Toast />
     </View>

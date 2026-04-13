@@ -32,6 +32,10 @@ export async function Navbar({ userId }: Props) {
         <div className="flex items-center gap-3">
           <CharacterSelector characters={characters} />
 
+          <Link href="/achievements" className="text-sm text-gray-400 hover:text-white transition-colors">
+            🏆 Succès
+          </Link>
+
           <Link href="/characters" className="text-sm text-gray-400 hover:text-white transition-colors">
             Personnages
           </Link>

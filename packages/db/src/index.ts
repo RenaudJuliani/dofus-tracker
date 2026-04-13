@@ -24,3 +24,9 @@ export {
   getAggregatedResourcesForDofus,
   searchQuests,
 } from "./queries/quests.js";
+
+export {
+  getAchievementSubcategories,
+  getAchievementsForCharacter,
+  toggleObjectiveCompletion,
+} from "./queries/achievements.js";
