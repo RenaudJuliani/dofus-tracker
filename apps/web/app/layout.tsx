@@ -14,6 +14,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Dofus Tracker",
   description: "Suivi de progression pour les Dofus",
+  verification: {
+    google: "zCGkjHC2SRTYZQGyApaKrmTodZPxapYsQnv7VNdrM2U",
+  },
 };
 
 export default async function RootLayout({
