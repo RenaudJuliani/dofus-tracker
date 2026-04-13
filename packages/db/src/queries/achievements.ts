@@ -12,11 +12,25 @@ export async function getAchievementSubcategories(
 ): Promise<AchievementSubcategory[]> {
   const { data: achievements, error } = await client
     .from("achievements")
-    .select("id, subcategory_id, subcategory_name, points, objectives:achievement_objectives(id, quest_id)");
+    .select("id, subcategory_id, subcategory_name, points");
   if (error) throw error;
   if (!achievements || achievements.length === 0) return [];
 
-  const allObjectives = achievements.flatMap((a) => a.objectives ?? []);
+  const achievementIds = achievements.map((a: { id: number }) => a.id);
+  const { data: objectiveRows, error: objError } = await client
+    .from("achievement_objectives")
+    .select("id, achievement_id, quest_id")
+    .in("achievement_id", achievementIds);
+  if (objError) throw objError;
+
+  const objectivesByAchievement = new Map<number, { id: string; quest_id: string | null }[]>();
+  for (const o of objectiveRows ?? []) {
+    const list = objectivesByAchievement.get(o.achievement_id) ?? [];
+    list.push({ id: o.id, quest_id: o.quest_id });
+    objectivesByAchievement.set(o.achievement_id, list);
+  }
+
+  const allObjectives = objectiveRows ?? [];
   const objectiveIds = allObjectives.map((o: { id: string }) => o.id);
   const questIds = allObjectives
     .filter((o: { quest_id: string | null }) => o.quest_id)
@@ -56,7 +70,7 @@ export async function getAchievementSubcategories(
       earned_points: 0,
     };
     entry.total++;
-    const objectives = (a.objectives ?? []) as { id: string; quest_id: string | null }[];
+    const objectives = objectivesByAchievement.get(a.id) ?? [];
     const allDone =
       objectives.length > 0 &&
       objectives.every((o) => (o.quest_id && questSet.has(o.quest_id)) || manualSet.has(o.id));
@@ -85,13 +99,28 @@ export async function getAchievementsForCharacter(
 ): Promise<AchievementWithProgress[]> {
   const { data: achievements, error: achError } = await client
     .from("achievements")
-    .select("*, objectives:achievement_objectives(*)")
+    .select("*")
     .eq("subcategory_id", subcategoryId)
     .order("order_index");
   if (achError) throw achError;
   if (!achievements || achievements.length === 0) return [];
 
-  const allObjectives = achievements.flatMap((a) => a.objectives ?? []);
+  const achievementIds = achievements.map((a: { id: number }) => a.id);
+  const { data: objectiveRows, error: objError } = await client
+    .from("achievement_objectives")
+    .select("*")
+    .in("achievement_id", achievementIds)
+    .order("order_index");
+  if (objError) throw objError;
+
+  const objectivesByAchievement = new Map<number, AchievementObjective[]>();
+  for (const o of objectiveRows ?? []) {
+    const list = objectivesByAchievement.get(o.achievement_id) ?? [];
+    list.push(o as AchievementObjective);
+    objectivesByAchievement.set(o.achievement_id, list);
+  }
+
+  const allObjectives = objectiveRows ?? [];
   const objectiveIds = allObjectives.map((o: { id: string }) => o.id);
   const questIds = allObjectives
     .filter((o: { quest_id: string | null }) => o.quest_id)
@@ -123,8 +152,7 @@ export async function getAchievementsForCharacter(
   const questSet = new Set((questCompletions ?? []).map((c: { quest_id: string }) => c.quest_id));
 
   return achievements.map((a) => {
-    const objectives = ((a.objectives ?? []) as AchievementObjective[])
-      .sort((x, y) => x.order_index - y.order_index)
+    const objectives = (objectivesByAchievement.get(a.id) ?? [])
       .map((o): AchievementObjectiveWithStatus => {
         const isAuto = o.quest_id != null && questSet.has(o.quest_id);
         const isManual = manualSet.has(o.id);
