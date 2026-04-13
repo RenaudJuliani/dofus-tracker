@@ -30,30 +30,19 @@ export async function getAchievementSubcategories(
     objectivesByAchievement.set(o.achievement_id, list);
   }
 
-  const allObjectives = objectiveRows ?? [];
-  const objectiveIds = allObjectives.map((o: { id: string }) => o.id);
-  const questIds = allObjectives
-    .filter((o: { quest_id: string | null }) => o.quest_id)
-    .map((o: { quest_id: string }) => o.quest_id);
-
+  // Fetch all completions for the character — avoids .in() with 1000+ items (URL too long)
   const [
     { data: manualCompletions, error: manualError },
     { data: questCompletions, error: questError },
   ] = await Promise.all([
-    objectiveIds.length > 0
-      ? client
-          .from("achievement_objective_completions")
-          .select("objective_id")
-          .eq("character_id", characterId)
-          .in("objective_id", objectiveIds)
-      : Promise.resolve({ data: [], error: null }),
-    questIds.length > 0
-      ? client
-          .from("user_quest_completions")
-          .select("quest_id")
-          .eq("character_id", characterId)
-          .in("quest_id", questIds)
-      : Promise.resolve({ data: [], error: null }),
+    client
+      .from("achievement_objective_completions")
+      .select("objective_id")
+      .eq("character_id", characterId),
+    client
+      .from("user_quest_completions")
+      .select("quest_id")
+      .eq("character_id", characterId),
   ]);
   if (manualError) throw manualError;
   if (questError) throw questError;
@@ -120,30 +109,19 @@ export async function getAchievementsForCharacter(
     objectivesByAchievement.set(o.achievement_id, list);
   }
 
-  const allObjectives = objectiveRows ?? [];
-  const objectiveIds = allObjectives.map((o: { id: string }) => o.id);
-  const questIds = allObjectives
-    .filter((o: { quest_id: string | null }) => o.quest_id)
-    .map((o: { quest_id: string }) => o.quest_id);
-
+  // Fetch all completions for the character — avoids .in() with large arrays (URL too long)
   const [
     { data: manualCompletions, error: manualError },
     { data: questCompletions, error: questError },
   ] = await Promise.all([
-    objectiveIds.length > 0
-      ? client
-          .from("achievement_objective_completions")
-          .select("objective_id")
-          .eq("character_id", characterId)
-          .in("objective_id", objectiveIds)
-      : Promise.resolve({ data: [], error: null }),
-    questIds.length > 0
-      ? client
-          .from("user_quest_completions")
-          .select("quest_id")
-          .eq("character_id", characterId)
-          .in("quest_id", questIds)
-      : Promise.resolve({ data: [], error: null }),
+    client
+      .from("achievement_objective_completions")
+      .select("objective_id")
+      .eq("character_id", characterId),
+    client
+      .from("user_quest_completions")
+      .select("quest_id")
+      .eq("character_id", characterId),
   ]);
   if (manualError) throw manualError;
   if (questError) throw questError;
