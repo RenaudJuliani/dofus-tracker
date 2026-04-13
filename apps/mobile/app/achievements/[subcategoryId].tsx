@@ -66,28 +66,40 @@ export default function AchievementListScreen() {
 
   async function handleToggleObjective(objectiveId: string, questId: string | null, completed: boolean) {
     if (!activeCharacterId) return;
+
+    // Capture state for rollback
+    const prevAchievements = achievements;
+    const prevSelected = selectedAchievement;
+
     // Optimistic update
     const updateAchs = (prev: AchievementWithProgress[]) =>
       prev.map((a) => ({
         ...a,
         objectives: a.objectives.map((o) =>
           o.id === objectiveId
-            ? { ...o, is_completed: completed, completion_source: completed ? (questId ? ("auto" as const) : ("manual" as const)) : null }
+            ? { ...o, is_completed: completed, completion_source: completed ? ("manual" as const) : null }
             : o
         ),
         completed_count: a.objectives.filter((o) => (o.id === objectiveId ? completed : o.is_completed)).length,
       }));
 
-    setAchievements(updateAchs);
+    const updatedAchs = updateAchs(achievements);
+    setAchievements(updatedAchs);
     setSelectedAchievement((prev) => prev ? updateAchs([prev])[0] : null);
 
     try {
       await toggleObjectiveCompletion(supabase, activeCharacterId, objectiveId, questId, completed);
+      // Mettre à jour le cache des achievements pour cette sous-catégorie
+      const catId = parseInt(subcategoryId, 10);
+      await writeCache(CACHE_KEYS.achievements(catId, activeCharacterId), updatedAchs);
       // Invalider le cache des sous-catégories
       const subcats = await getAchievementSubcategories(supabase, activeCharacterId);
       await writeCache(CACHE_KEYS.achievementSubcategories(activeCharacterId), subcats);
     } catch (err) {
       console.error(err);
+      // Rollback
+      setAchievements(prevAchievements);
+      setSelectedAchievement(prevSelected);
     }
   }
 
