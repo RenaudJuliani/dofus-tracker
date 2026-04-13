@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import {
   getAchievementsForCharacter,
@@ -26,6 +27,7 @@ function statusColor(completed: number, total: number) {
 
 export default function AchievementListScreen() {
   const { subcategoryId, name } = useLocalSearchParams<{ subcategoryId: string; name: string }>();
+  const insets = useSafeAreaInsets();
   const activeCharacterId = useCharacterStore((s) => s.activeCharacterId);
   const [achievements, setAchievements] = useState<AchievementWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +110,7 @@ export default function AchievementListScreen() {
     : achievements;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <Stack.Screen options={{ title: decodeURIComponent(name ?? "Succès") }} />
 
       {/* Barre de recherche */}

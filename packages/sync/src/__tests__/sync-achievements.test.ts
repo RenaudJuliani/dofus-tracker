@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalizeQuestName } from "../sync-achievements.js";
+import { normalizeQuestName, extractQuestNameFromDescription } from "../sync-achievements.js";
 
 describe("normalizeQuestName", () => {
   it("met en minuscules", () => {
@@ -21,5 +21,32 @@ describe("normalizeQuestName", () => {
 
   it("conserve les accents", () => {
     expect(normalizeQuestName("Épilogue hivernal")).toBe("épilogue hivernal");
+  });
+});
+
+describe("extractQuestNameFromDescription", () => {
+  it("extrait le nom avec deux-points", () => {
+    expect(extractQuestNameFromDescription("Terminer la quête : Et l'emmental ?")).toBe("Et l'emmental ?");
+  });
+
+  it("extrait le nom sans deux-points", () => {
+    expect(extractQuestNameFromDescription("Terminer la quête Chaud du S.L.I.P.")).toBe("Chaud du S.L.I.P.");
+  });
+
+  it("fonctionne avec Compléter", () => {
+    expect(extractQuestNameFromDescription("Compléter la quête : Épilogue hivernal")).toBe("Épilogue hivernal");
+  });
+
+  it("fonctionne avec Completer sans accent", () => {
+    expect(extractQuestNameFromDescription("Completer la quête : Test")).toBe("Test");
+  });
+
+  it("est insensible à la casse", () => {
+    expect(extractQuestNameFromDescription("TERMINER LA QUÊTE : Nom")).toBe("Nom");
+  });
+
+  it("retourne null si aucun pattern ne correspond", () => {
+    expect(extractQuestNameFromDescription("Vaincre 10 monstres")).toBeNull();
+    expect(extractQuestNameFromDescription("Atteindre le niveau 200")).toBeNull();
   });
 });

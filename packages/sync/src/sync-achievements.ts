@@ -13,6 +13,21 @@ export function normalizeQuestName(name: string): string {
     .trim();
 }
 
+/**
+ * Extrait le nom de quête depuis la description d'un succès sans objectifs.
+ * Couvre les patterns DofusDB courants :
+ *   "Terminer la quête : Et l'emmental ?"
+ *   "Terminer la quête Chaud du S.L.I.P."
+ *   "Compléter la quête : Nom"
+ * Retourne null si aucun pattern ne correspond.
+ */
+export function extractQuestNameFromDescription(description: string): string | null {
+  const match = description.match(
+    /(?:terminer|compl[eé]ter)\s+la\s+qu[eê]te\s*:?\s+(.+)/i
+  );
+  return match ? match[1].trim() : null;
+}
+
 // ─── Types DofusDB ────────────────────────────────────────────────────────────
 
 interface DofusDBObjective {
@@ -109,8 +124,6 @@ export async function syncAchievements(
 
     // Upsert objectives pour chaque achievement
     for (const a of subcat.achievements) {
-      if (!a.objectives || a.objectives.length === 0) continue;
-
       // Récupérer les quest_id déjà matchés pour ne pas les écraser
       const { data: existing } = await client
         .from("achievement_objectives")
@@ -122,10 +135,19 @@ export async function syncAchievements(
         existingMap.set(normalizeQuestName(e.description), { quest_id: e.quest_id });
       }
 
-      const objectiveRows = a.objectives.map((o) => {
-        const normalizedDesc = normalizeQuestName(o.description);
+      let objectiveRows: {
+        achievement_id: number;
+        order_index: number;
+        description: string;
+        quest_id: string | null;
+      }[];
+
+      if (!a.objectives || a.objectives.length === 0) {
+        // Pas d'objectifs DofusDB : on génère un objectif synthétique depuis la description du succès.
+        const extracted = extractQuestNameFromDescription(a.description);
+        const objectiveDesc = extracted ?? a.description;
+        const normalizedDesc = normalizeQuestName(objectiveDesc);
         const existingEntry = existingMap.get(normalizedDesc);
-        // Préserver un quest_id déjà matchés
         const resolvedQuestId =
           existingEntry?.quest_id ?? questNameMap.get(normalizedDesc) ?? null;
 
@@ -135,13 +157,34 @@ export async function syncAchievements(
           report.objectivesUnmatched++;
         }
 
-        return {
+        objectiveRows = [{
           achievement_id: a.id,
-          order_index: o.order,
-          description: o.description,
+          order_index: 0,
+          description: objectiveDesc,
           quest_id: resolvedQuestId,
-        };
-      });
+        }];
+      } else {
+        objectiveRows = a.objectives.map((o) => {
+          const normalizedDesc = normalizeQuestName(o.description);
+          const existingEntry = existingMap.get(normalizedDesc);
+          // Préserver un quest_id déjà matchés
+          const resolvedQuestId =
+            existingEntry?.quest_id ?? questNameMap.get(normalizedDesc) ?? null;
+
+          if (resolvedQuestId) {
+            report.objectivesMatched++;
+          } else {
+            report.objectivesUnmatched++;
+          }
+
+          return {
+            achievement_id: a.id,
+            order_index: o.order,
+            description: o.description,
+            quest_id: resolvedQuestId,
+          };
+        });
+      }
 
       const { error: objError } = await client
         .from("achievement_objectives")
