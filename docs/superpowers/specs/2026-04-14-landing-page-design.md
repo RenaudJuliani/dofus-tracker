@@ -97,13 +97,41 @@ Tous les assets sont dans `/Users/juliani/Downloads/` et devront être placés d
 
 ---
 
+## Navbar connectée — ajout lien Dofus
+
+Le `Navbar.tsx` (affiché uniquement pour les utilisateurs connectés) doit recevoir un lien explicite vers la page Dofus (`/`), car actuellement seul le clic sur le logo y mène.
+
+**Changement :**
+- Ajouter un lien "Dofus" dans la nav connectée, à droite du logo / avant les autres liens
+- Icône : `forgelave.png` (à fournir par l'utilisateur) — même style que les autres icônes Dofus (36×36 dans un wrapper)
+- Également remplacer l'emoji 🏆 du lien Succès par `menu_achievements.png`
+
+**Asset requis :** `forgelave.png` (icône forgelave Dofus, à placer dans `apps/web/public/images/icons/`)
+
+---
+
+## Routing
+
+| Route | Comportement |
+|-------|-------------|
+| `/` | Landing page — toujours accessible (connecté ou non) |
+| `/dofus` | DofusGrid — requiert auth, redirect `/auth/login` si déconnecté |
+| `/auth/login` | Après login, redirect vers `/dofus` |
+
+La `LandingPage` n'est plus conditionnelle — elle est toujours rendue sur `/`.  
+La `DofusGrid` déménage sur `/dofus` (nouveau fichier `apps/web/app/dofus/page.tsx`).
+
+---
+
 ## Implémentation
 
 - La landing est dans `apps/web/app/page.tsx`, fonction `LandingPage()` (composant server, pas de client)
 - Le composant `LandingPage` sera extrait dans `apps/web/components/landing/LandingPage.tsx`
 - Les images sont servies via Next.js `<Image>` avec `priority` sur le hero
-- La page existante connectée (`DofusGrid`) n'est pas touchée
+- La `DofusGrid` déménage de `apps/web/app/page.tsx` vers `apps/web/app/dofus/page.tsx`
 - Responsive : le hero split passe en colonne sur mobile (image en dessous du texte), la grille features passe en 1 colonne
+- `Navbar.tsx` : ajout lien Dofus (forgelave icon → `/dofus`) + remplacement emoji 🏆 par `menu_achievements.png`
+- Les feature cards de la landing ne sont pas cliquables (purement informatives)
 
 ---
 
@@ -112,3 +140,4 @@ Tous les assets sont dans `/Users/juliani/Downloads/` et devront être placés d
 - Animations / transitions (pas pour cette version)
 - Internationalisation
 - Page de démo / screenshot de l'app dans le hero
+- Liens dans les feature cards
