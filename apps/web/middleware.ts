@@ -30,17 +30,25 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
+  const { pathname } = request.nextUrl;
+  const isAuthRoute = pathname.startsWith("/auth");
+  const isSignoutRoute = pathname === "/auth/signout";
 
-  if (!user && !isAuthRoute) {
+  // Pages publiques accessibles sans auth
+  const isPublicRoute = pathname === "/" || pathname === "/privacy";
+
+  // Non-connecté sur une route protégée → login
+  if (!user && !isAuthRoute && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  // Connecté sur une page auth (ex: /auth/login) → /dofus
+  // Sauf /auth/signout qui doit s'exécuter normalement
+  if (user && isAuthRoute && !isSignoutRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dofus";
     return NextResponse.redirect(url);
   }
 
