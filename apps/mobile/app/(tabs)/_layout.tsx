@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Text, View } from "react-native";
+import { Image, View } from "react-native";
 import { ToastProvider } from "@/lib/ToastContext";
 import { Toast } from "@/components/shared/Toast";
 import { useNetworkStatus } from "@/lib/useNetworkStatus";
@@ -26,28 +26,52 @@ function TabsWithToast() {
           name="index"
           options={{
             title: "Mes Dofus",
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>🥚</Text>,
+            tabBarIcon: ({ color }) => (
+              <Image
+                source={require("@/assets/images/dofus/dofus-Forgelave.png")}
+                style={{ width: 22, height: 22, tintColor: color }}
+                resizeMode="contain"
+              />
+            ),
           }}
         />
         <Tabs.Screen
           name="resources"
           options={{
             title: "Ressources",
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>📦</Text>,
+            tabBarIcon: ({ color }) => (
+              <Image
+                source={require("@/assets/images/ressources.png")}
+                style={{ width: 22, height: 22, tintColor: color }}
+                resizeMode="contain"
+              />
+            ),
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
             title: "Profil",
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>👤</Text>,
+            tabBarIcon: ({ color }) => (
+              <Image
+                source={require("@/assets/images/menu_classe.png")}
+                style={{ width: 22, height: 22, tintColor: color }}
+                resizeMode="contain"
+              />
+            ),
           }}
         />
         <Tabs.Screen
           name="achievements"
           options={{
             title: "Succès",
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>🏆</Text>,
+            tabBarIcon: ({ color }) => (
+              <Image
+                source={require("@/assets/images/menu_achievements.png")}
+                style={{ width: 22, height: 22, tintColor: color }}
+                resizeMode="contain"
+              />
+            ),
           }}
         />
       </Tabs>

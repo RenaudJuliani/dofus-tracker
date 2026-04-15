@@ -81,7 +81,7 @@ export function DofusGrid({ dofusList }: Props) {
           placeholder="Rechercher une quête…"
           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-dofus-green/40 transition-colors"
         />
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         {query && (
           <button
             onClick={() => setQuery("")}
