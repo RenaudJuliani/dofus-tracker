@@ -35,7 +35,11 @@ export async function middleware(request: NextRequest) {
   const isSignoutRoute = pathname === "/auth/signout";
 
   // Pages publiques accessibles sans auth
-  const isPublicRoute = pathname === "/" || pathname === "/privacy";
+  const isPublicRoute =
+    pathname === "/" ||
+    pathname === "/privacy" ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt";
 
   // Non-connecté sur une route protégée → login
   if (!user && !isAuthRoute && !isPublicRoute) {
