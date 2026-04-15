@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/nav/Navbar";
 import { createClient } from "@/lib/supabase/server";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -35,6 +36,7 @@ export default async function RootLayout({
         <Providers>
           {user && <Navbar userId={user.id} />}
           <div className="min-h-screen">{children}</div>
+          <Analytics />
         </Providers>
       </body>
     </html>
