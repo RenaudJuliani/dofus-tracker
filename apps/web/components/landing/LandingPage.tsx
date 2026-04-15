@@ -161,7 +161,7 @@ export function LandingPage({ isConnected }: Props) {
       </section>
 
       {/* Bannière Bonta vs Brakmar */}
-      <div className="px-8 pb-8">
+      <div className="px-8 pb-8 pt-10">
         <div className="max-w-7xl mx-auto">
           <div className="relative h-44 rounded-2xl overflow-hidden border border-white/8">
             <Image
@@ -192,7 +192,7 @@ export function LandingPage({ isConnected }: Props) {
       </div>
 
       {/* CTA Final */}
-      <div className="px-8 pb-18">
+      <div className="px-8 pb-18 mb-10">
         <div className="max-w-7xl mx-auto">
           <div className="relative rounded-2xl overflow-hidden border border-dofus-green/15 min-h-[320px] flex items-center justify-center">
             <Image
