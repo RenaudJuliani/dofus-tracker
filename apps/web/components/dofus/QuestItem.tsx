@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { QuestWithChain, QuestType } from "@dofus-tracker/types";
 
 const BADGE_CONFIG: Record<QuestType, { label: string; color: string }> = {
@@ -125,7 +126,7 @@ export function QuestItem({ quest, dofusColor, onToggle, highlighted = false }: 
               }}
               title="Ressources requises"
             >
-              📦 {resources.length}
+              <Image src="/images/icons/ressources.png" alt="Ressources" width={12} height={12} className="object-contain inline-block" /> {resources.length}
             </button>
           )}
         </div>

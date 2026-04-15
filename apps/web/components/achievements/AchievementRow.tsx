@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { AchievementWithProgress, AchievementObjectiveWithStatus } from "@dofus-tracker/types";
 
 interface Props {
@@ -76,9 +77,15 @@ export function AchievementRow({ achievement, onToggleObjective }: Props) {
         {/* Left color bar */}
         <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${statusColor(completed_count, total_count)}`} />
 
-        {/* Icon placeholder */}
-        <div className="w-8 h-8 rounded bg-gray-800 flex items-center justify-center text-lg flex-shrink-0">
-          🏆
+        {/* Icon officielle succès */}
+        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+          <Image
+            src="/images/icons/menu_achievements.png"
+            alt="Succès"
+            width={28}
+            height={28}
+            className="object-contain"
+          />
         </div>
 
         {/* Name + description */}
