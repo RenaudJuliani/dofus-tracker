@@ -32,8 +32,28 @@ export async function Navbar({ userId }: Props) {
         <div className="flex items-center gap-3">
           <CharacterSelector characters={characters} />
 
-          <Link href="/achievements" className="text-sm text-gray-400 hover:text-white transition-colors">
-            🏆 Succès
+          {/* Lien Dofus — icône forgelave */}
+          <Link href="/dofus" className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors">
+            <Image
+              src="/images/icons/forgelave.png"
+              alt="Dofus"
+              width={18}
+              height={18}
+              className="object-contain"
+            />
+            Dofus
+          </Link>
+
+          {/* Succès avec icône officielle */}
+          <Link href="/achievements" className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors">
+            <Image
+              src="/images/icons/menu_achievements.png"
+              alt="Succès"
+              width={18}
+              height={18}
+              className="object-contain"
+            />
+            Succès
           </Link>
 
           <Link href="/characters" className="text-sm text-gray-400 hover:text-white transition-colors">
