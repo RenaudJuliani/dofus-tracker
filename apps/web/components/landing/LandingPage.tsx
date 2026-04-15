@@ -235,12 +235,20 @@ export function LandingPage({ isConnected }: Props) {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-white/6 px-8 py-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <span className="text-sm font-bold text-white/25">
-            Dofus <span className="text-dofus-green/45">Tracker</span>
-          </span>
-          <span className="text-xs text-white/18">Fan-made · Non affilié à Ankama</span>
+      <footer className="border-t border-white/6 px-8 py-8">
+        <div className="max-w-7xl mx-auto flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-white/25">
+              Dofus <span className="text-dofus-green/45">Tracker</span>
+            </span>
+            <span className="text-xs text-white/18">Fan-made · Non affilié à Ankama</span>
+          </div>
+          <p className="text-xs text-white/18 leading-relaxed">
+            Certaines illustrations et données sont la propriété d&apos;{" "}
+            <span className="text-white/30">Ankama Games</span>. Données issues de{" "}
+            <span className="text-white/30">DofusDB</span> et du spreadsheet communautaire de{" "}
+            <span className="text-white/30">Tougli</span>.
+          </p>
         </div>
       </footer>
     </div>
